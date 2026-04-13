@@ -1,0 +1,20 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const connectDB = require('./config/db');
+
+const app = express();
+
+// Connect to database
+connectDB();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Routes
+// app.use('/api/admin/products', require('./routes/productRoutes'));
+// app.use('/api/admin/content', require('./routes/contentRoutes'));
+
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => console.log(`Admin Backend Server running on port ${PORT}`));
