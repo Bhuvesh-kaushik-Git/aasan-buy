@@ -13,8 +13,8 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.use('/api/settings', require('./routes/settingsRoutes'));
 // app.use('/api/admin/products', require('./routes/productRoutes'));
-// app.use('/api/admin/content', require('./routes/contentRoutes'));
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Admin Backend Server running on port ${PORT}`));

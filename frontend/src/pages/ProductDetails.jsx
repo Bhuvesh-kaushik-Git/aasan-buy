@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
 const SuggestionModal = ({ isOpen, onClose, onContinue }) => {
   if (!isOpen) return null;
@@ -45,11 +46,39 @@ const SuggestionModal = ({ isOpen, onClose, onContinue }) => {
 };
 
 const ProductDetails = ({ onOpenCart }) => {
+  const { id } = useParams();
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeImg, setActiveImg] = useState(0);
   const [showModal, setShowModal] = useState(false);
   
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/products/${id}`);
+        if (!res.ok) throw new Error('Product not found');
+        const data = await res.json();
+        setProduct(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [id]);
+
   const handleAddToCart = () => {
     setShowModal(true);
   };
+
+  if (loading) return <div className="min-h-[60vh] flex items-center justify-center font-bold text-secondary animate-pulse">Loading Product...</div>;
+  if (error) return <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+    <div className="text-red-500 font-bold">{error}</div>
+    <a href="/" className="text-secondary underline">Back to Home</a>
+  </div>;
+  if (!product) return null;
 
   return (
     <div className="w-full bg-[#fcfcfc] font-sans">
@@ -59,67 +88,93 @@ const ProductDetails = ({ onOpenCart }) => {
         <div className="flex gap-4">
            {/* Thumbnails */}
            <div className="hidden md:flex flex-col gap-3 w-20">
-             {[1,2,3].map((i) => (
-               <div key={i} className={`aspect-square border cursor-pointer ${i === 1 ? 'border-primary border-[2px]' : 'border-gray-200'}`}>
-                 <img src={`https://images.unsplash.com/photo-1563241598-6bbdb1e96723?w=150&h=150&fit=crop&q=${i}`} className="w-full h-full object-cover" />
+             {product.images.map((img, i) => (
+               <div key={i} 
+                 onClick={() => setActiveImg(i)}
+                 className={`aspect-square border cursor-pointer overflow-hidden transition-all ${i === activeImg ? 'border-secondary border-[2px] shadow-sm' : 'border-gray-200 hover:border-gray-300'}`}
+               >
+                 <img src={img} className="w-full h-full object-cover" />
                </div>
              ))}
            </div>
-           {/* Main Carousel area */}
-           <div className="flex-grow bg-white aspect-square border border-gray-100 relative">
-             <img src="https://images.unsplash.com/photo-1563241598-6bbdb1e96723?w=800&h=800&fit=crop" className="w-full h-full object-cover" />
-             <div className="absolute top-4 left-4 bg-white border text-gray-700 text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wide shadow-sm">Best Seller</div>
+           {/* Main Image area */}
+           <div className="flex-grow bg-white aspect-square border border-gray-100 relative overflow-hidden rounded-lg shadow-sm">
+             <img src={product.images[activeImg]} className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" alt={product.name} />
+             {product.stock > 0 && product.stock < 10 && (
+               <div className="absolute top-4 left-4 bg-secondary text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">Only {product.stock} Left!</div>
+             )}
            </div>
         </div>
 
         {/* Right Col: Specific Details panel */}
         <div>
-          <div className="bg-white border border-gray-200 rounded p-6 shadow-[0_2px_15px_rgba(0,0,0,0.03)] sticky top-36">
-            <h1 className="text-[22px] font-medium text-dark leading-snug tracking-tight mb-2">Red Roses Elegance With Glass Vase</h1>
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] sticky top-36">
+            <h1 className="text-[24px] font-bold text-dark leading-snug tracking-tight mb-2">{product.name}</h1>
             
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex items-center bg-green-50 px-1.5 py-0.5 rounded text-secondary text-[11px] font-bold border border-green-100">★ 4.8</div>
-              <a href="#" className="flex gap-2">
-                <span className="text-[12px] text-gray-500 hover:text-primary underline">124 Reviews</span>
-              </a>
+              <div className="flex items-center bg-orange-50 px-2 py-0.5 rounded text-secondary text-[12px] font-bold border border-orange-100">★ 4.8</div>
+              <span className="text-[13px] text-gray-500 font-medium">{product.category}</span>
             </div>
 
-            <div className="flex items-baseline gap-2 mb-6">
-              <span className="text-[24px] font-black text-dark font-sans tracking-tight">QAR 249</span>
-              <span className="text-[15px] text-gray-400 line-through">QAR 299</span>
-              <span className="text-[12px] font-bold text-secondary tracking-widest uppercase">(16% OFF)</span>
+            <div className="flex items-baseline gap-3 mb-6">
+              <span className="text-[28px] font-black text-dark font-sans tracking-tight">QAR {product.price}</span>
+              <span className="text-[16px] text-gray-400 line-through">QAR {Math.round(product.price * 1.2)}</span>
+              <span className="text-[13px] font-bold text-secondary tracking-widest uppercase">(20% OFF)</span>
             </div>
 
             {/* Delivery Inputs Box */}
-            <div className="bg-[#fcfcfc] border border-gray-200 rounded p-4 mb-6">
-               <h4 className="font-bold text-gray-800 text-[13px] uppercase tracking-wide mb-3 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-primary"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
+            <div className="bg-[#fffbf4] border border-orange-100/50 rounded-2xl p-5 mb-6">
+               <h4 className="font-bold text-gray-800 text-[12px] uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-secondary"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
                   Delivery Destination
                </h4>
-               <input 
-                  type="text" 
-                  placeholder="Enter Area / Pincode" 
-                  className="w-full border-b border-gray-300 bg-transparent py-2 text-[13px] focus:outline-none focus:border-primary transition-colors text-dark mb-4" 
-               />
-               <input 
-                  type="date"
-                  className="w-full border-b border-gray-300 bg-transparent py-2 text-[13px] focus:outline-none focus:border-primary text-gray-500"
-               />
+               <div className="space-y-4">
+                 <div className="relative">
+                   <input 
+                      type="text" 
+                      placeholder="Enter Area / Pincode" 
+                      className="w-full border-b-2 border-gray-200 bg-transparent py-2 text-[14px] focus:outline-none focus:border-secondary transition-colors text-dark font-medium placeholder:text-gray-400" 
+                   />
+                 </div>
+                 <div className="relative">
+                   <input 
+                      type="date"
+                      className="w-full border-b-2 border-gray-200 bg-transparent py-2 text-[14px] focus:outline-none focus:border-secondary transition-colors text-gray-600 font-medium"
+                   />
+                 </div>
+               </div>
+               <p className="text-[11px] text-gray-400 mt-4 leading-normal italic">* Select a date to see available delivery slots.</p>
             </div>
 
             <div className="pt-2 mb-8">
-              <h4 className="font-bold text-gray-800 text-[13px] uppercase tracking-wide mb-2">Description</h4>
-              <ul className="text-[13px] text-gray-600 space-y-1.5 list-disc pl-4 marker:text-gray-300">
-                <li>12 Premium Red Roses</li>
-                <li>Premium Glass Vase Included</li>
-                <li>Freshly plucked and sanitized</li>
-              </ul>
+              <h4 className="font-bold text-gray-800 text-[12px] uppercase tracking-wider mb-2">Description</h4>
+              <p className="text-[14px] text-gray-600 leading-relaxed font-medium">
+                {product.description}
+              </p>
             </div>
 
-            <div className="flex gap-3">
-              <button onClick={handleAddToCart} className="flex-1 bg-primary text-white font-bold py-3.5 rounded hover:bg-opacity-90 uppercase text-[15px] tracking-wide transition-colors">
+            <div className="flex gap-4">
+              <button 
+                onClick={handleAddToCart} 
+                className="flex-1 bg-secondary text-white font-black py-4 rounded-xl hover:shadow-[0_10px_25px_rgba(245,156,26,0.3)] hover:-translate-y-0.5 transition-all uppercase text-[15px] tracking-widest"
+              >
                 ADD TO CART
               </button>
+            </div>
+
+            <div className="mt-6 flex items-center justify-center gap-6 border-t border-gray-100 pt-6">
+               <div className="flex flex-col items-center gap-1">
+                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Secure</span>
+               </div>
+               <div className="flex flex-col items-center gap-1">
+                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.129-1.125V11.25c0-.447-.25-.847-.643-1.04l-2.25-1.125a1.125 1.125 0 0 0-1.04 0l-2.25 1.125a1.125 1.125 0 0 0-.643 1.04v1.125m-9 0h1.125m1.125-1.125h1.125m1.125-1.125h1.125" /></svg>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Fast</span>
+               </div>
             </div>
           </div>
         </div>

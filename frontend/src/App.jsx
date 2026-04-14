@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Header from './components/Header';
 import Home from './pages/Home';
@@ -7,22 +7,26 @@ import Footer from './components/Footer';
 
 function App() {
   const [cartOpen, setCartOpen] = useState(false);
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/settings')
+      .then(res => res.json())
+      .then(data => setSettings(data))
+      .catch(err => console.error("Error fetching settings:", err));
+  }, []);
 
   return (
     <Router>
       <div className="min-h-screen flex flex-col bg-background font-sans text-dark overflow-x-hidden">
-        <Header onOpenCart={() => setCartOpen(true)} />
+        <Header settings={settings} onOpenCart={() => setCartOpen(true)} />
         
-        <main className="flex-grow pt-[80px] pb-12">
-          {/* Quick debug navigation since links aren't fully wired yet */}
-          <div className="bg-gray-100/50 text-center py-2 text-[11px] flex justify-center gap-4 border-b border-gray-200 text-gray-500">
-            <span className="font-bold">Dev Navigation:</span>
-            <Link to="/" className="hover:text-secondary transition-colors">Home</Link>
-            <Link to="/product/1" className="hover:text-secondary transition-colors">Product Page Demo</Link>
-          </div>
+        <main className="flex-grow pt-[120px] md:pt-[130px] pb-12">
+          {/* Quick debug navigation */}
+          {/* ... removed for cleaner look ... */}
           
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Home settings={settings} />} />
             <Route path="/product/:id" element={<ProductDetails onOpenCart={() => setCartOpen(true)} />} />
           </Routes>
         </main>
