@@ -13,7 +13,7 @@ function App() {
       <div className="min-h-screen flex flex-col bg-background font-sans text-dark overflow-x-hidden">
         <Header onOpenCart={() => setCartOpen(true)} />
         
-        <main className="flex-grow pt-[115px] pb-12">
+        <main className="flex-grow pt-[80px] pb-12">
           {/* Quick debug navigation since links aren't fully wired yet */}
           <div className="bg-gray-100/50 text-center py-2 text-[11px] flex justify-center gap-4 border-b border-gray-200 text-gray-500">
             <span className="font-bold">Dev Navigation:</span>

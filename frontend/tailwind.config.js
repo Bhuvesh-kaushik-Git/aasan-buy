@@ -7,16 +7,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#7a8234', // FNP Olive Green
-        secondary: '#008e36', // FNP Emerald Green
-        success: '#008e36',
-        accent: '#bec49e', // FNP Light Olive (Checkout buttons)
-        background: '#ffffff',
-        dark: '#111111',
-        light: '#f5f5f5'
+        primary: '#0e4c92', // AasanBuy Dark Blue
+        secondary: '#f59c1a', // AasanBuy Bright Orange
+        background: '#fffbf4', // Warm Cream Background
+        accent: '#f3f4f6', 
+        dark: '#1f2937',
+        light: '#ffffff'
       },
       fontFamily: {
-        sans: ['Montserrat', 'Inter', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
+        serif: ['Playfair Display', 'serif'],
       }
     },
   },

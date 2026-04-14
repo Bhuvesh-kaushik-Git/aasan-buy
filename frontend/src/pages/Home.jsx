@@ -1,95 +1,105 @@
 import React from 'react';
 
-const BoxItem = ({ image, title, price }) => (
-  <div className="group cursor-pointer bg-white rounded shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:shadow-lg transition-shadow p-2.5 flex flex-col h-full min-w-[160px] snap-center">
-    <div className="relative aspect-square rounded overflow-hidden bg-gray-50 mb-3 group-hover:opacity-95 transition-opacity">
-      <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-      <div className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full text-gray-300 hover:text-primary transition-colors shadow">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-[18px] h-[18px]">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-        </svg>
-      </div>
+const SplitCard = ({ title, text, image }) => (
+  <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_15px_40px_rgb(0,0,0,0.1)] transition-shadow p-3 flex w-[320px] md:w-[380px] h-[160px] snap-center shrink-0 border border-gray-50 flex-row gap-4 group">
+    {/* Image Left */}
+    <div className="w-[120px] h-full rounded-xl overflow-hidden bg-gray-50 relative flex-shrink-0">
+      <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
     </div>
-    <div className="flex flex-col flex-grow justify-between px-1 pb-1">
-      <h3 className="text-[13px] font-semibold text-dark line-clamp-2 leading-snug">{title}</h3>
-      <div className="mt-2.5">
-        <span className="font-bold text-[14px] text-dark font-sans">QAR {price}</span>
-        <div className="text-[11px] text-primary flex items-center gap-1 mt-1 font-bold">
-           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3"><path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" /></svg>
-           Earliest Delivery: Today
-        </div>
+    
+    {/* Content Right */}
+    <div className="flex flex-col justify-between py-1 flex-grow">
+      <div>
+        <h3 className="text-[14px] md:text-[15px] font-bold text-dark leading-snug">{title}</h3>
+        <p className="text-[10px] md:text-[11px] text-gray-500 mt-1.5 line-clamp-3 leading-relaxed">{text}</p>
       </div>
+      <button className="bg-secondary text-white text-[11px] font-bold px-5 py-2 rounded-full w-max hover:-translate-y-0.5 hover:shadow-md transition-all uppercase tracking-wide">
+        Buy Now
+      </button>
     </div>
   </div>
 );
 
 const Home = () => {
   return (
-    <div className="w-full font-sans bg-gray-50/30">
-      {/* Hero Banner Section (FNP exact style: full width on mobile, max-w bounded on desktop) */}
-      <section className="px-0 sm:px-4 py-4 md:px-8 max-w-[1400px] mx-auto pt-2">
-        <div className="relative w-full h-[220px] md:h-[420px] rounded-none sm:rounded-lg overflow-hidden bg-gray-100 flex items-center px-8 md:px-20 shadow-sm group cursor-pointer">
-          <img src="https://images.unsplash.com/photo-1563241598-6bbdb1e96723?q=80&w=2000&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover brightness-[0.85] group-hover:scale-[1.02] transition-transform duration-1000 ease-out" alt="FNP Banner" />
-          <div className="z-10 text-white drop-shadow-md">
-             <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight tracking-tight mt-10">Make Every Moment <br/> <span className="text-white">Unforgettable</span></h1>
-             <p className="font-semibold text-sm md:text-lg opacity-90 max-w-lg mb-6">Order premium flowers and gifts for your loved ones.</p>
-             <button className="bg-white text-dark px-8 py-3.5 rounded font-black text-sm hover:bg-gray-100 transition-colors uppercase tracking-wider">
-               Shop Now
-             </button>
-          </div>
-          {/* FNP Pagination Dots */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-            <div className="w-[30px] h-[4px] bg-white rounded-full"></div>
-            <div className="w-[10px] h-[4px] bg-white/50 rounded-full"></div>
-            <div className="w-[10px] h-[4px] bg-white/50 rounded-full"></div>
-          </div>
-        </div>
-      </section>
+    <div className="w-full font-sans bg-background relative overflow-hidden">
+      {/* Fake Background Pattern (Subtle Doodles) */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+           style={{ backgroundImage: 'radial-gradient(#0e4c92 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
+      </div>
 
-      {/* Quick Category Icons (Strict FNP round styling) */}
-      <section className="py-6 bg-white shadow-sm border-y border-gray-100 relative z-10">
-        <div className="max-w-[1400px] mx-auto px-4 md:px-8">
-          <div className="flex items-start justify-between gap-2 overflow-x-auto pb-4 snap-x no-scrollbar md:-mx-4 font-sans">
-            {[
-              { name: 'Flowers', img: 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=150&h=150&fit=crop' },
-              { name: 'Cakes', img: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=150&h=150&fit=crop' },
-              { name: 'Personalised', img: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=150&h=150&fit=crop' },
-              { name: 'Plants', img: 'https://images.unsplash.com/photo-1459156212016-c812468e2115?w=150&h=150&fit=crop' },
-              { name: 'Chocolates', img: 'https://images.unsplash.com/photo-1511381939415-e440c9c36ba3?w=150&h=150&fit=crop' },
-              { name: 'Combos', img: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=150&h=150&fit=crop' },
-              { name: 'Anniversary', img: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=150&h=150&fit=crop' },
-              { name: 'Birthday', img: 'https://images.unsplash.com/photo-1530103862676-de8892bf309c?w=150&h=150&fit=crop' }
-            ].map((cat, i) => (
-              <div key={i} className="flex flex-col items-center gap-2 cursor-pointer group snap-start min-w-[70px] md:min-w-[90px] px-2">
-                <div className="w-[60px] h-[60px] md:w-[75px] md:h-[75px] rounded-full overflow-hidden p-[3px] border-[2px] border-transparent group-hover:border-primary transition-all duration-300 bg-white">
-                  <img src={cat.img} alt={cat.name} className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500" />
-                </div>
-                <span className="text-[12px] font-bold text-gray-700 text-center whitespace-nowrap">{cat.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Product Carousel Section */}
-      <section className="py-12 px-4 md:px-8 max-w-[1400px] mx-auto bg-gray-50/20">
-        <div className="flex items-center justify-between mb-6 border-b border-gray-200 pb-2">
-          <h2 className="text-[22px] md:text-[26px] font-black text-dark tracking-tight">Best Sellers</h2>
-          <button className="text-[13px] font-bold text-secondary hover:underline">View All</button>
-        </div>
+      {/* Hero Section */}
+      <section className="relative pt-12 pb-16 flex flex-col items-center text-center max-w-[1200px] mx-auto px-4 z-10 min-h-[75vh] justify-center">
         
-        <div className="flex overflow-x-auto gap-4 pb-6 snap-x no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
+        {/* Floating Box Graphic Placement */}
+        <div className="relative w-full max-w-[400px] aspect-square flex items-center justify-center mb-6 animate-float">
+          {/* We use a mask over a premium curated photo to create a central focused blob that floats */}
+          <div className="absolute w-[80%] h-[80%] bg-primary/5 rounded-full blur-3xl -z-10"></div>
+          <img 
+            src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800&auto=format&fit=crop" 
+            alt="Curated Box" 
+            className="w-[85%] h-[85%] object-cover rounded-full shadow-2xl border-8 border-white mask-image-blob"
+            style={{ borderRadius: '40% 60% 70% 30% / 40% 50% 60% 50%' }}
+          />
+        </div>
+
+        {/* Hero Text */}
+        <div className="max-w-xl mx-auto flex flex-col items-center">
+           <h1 className="text-4xl md:text-5xl lg:text-[64px] font-black tracking-tight leading-[1.1] mb-5">
+             <span className="font-serif text-primary block sm:inline">CURATED JOY.</span>
+             <span className="font-sans text-secondary block sm:inline sm:ml-4">AASAN LIVING.</span>
+           </h1>
+           <p className="text-gray-600 font-medium text-base md:text-[18px] max-w-[400px]">
+             Hand-picked essentials, delivered to your door. Your easiest online experience.
+           </p>
+
+           {/* Main CTA */}
+           <button className="mt-8 bg-secondary text-white text-[18px] font-bold px-12 py-4 rounded-full shadow-[0_10px_30px_rgb(245,156,26,0.35)] hover:shadow-[0_15px_40px_rgb(245,156,26,0.5)] hover:-translate-y-1 transition-all uppercase tracking-wider relative group">
+             Buy Now
+             <span className="absolute w-full h-full rounded-full border-2 border-secondary/50 -inset-2 opacity-0 group-hover:opacity-100 group-hover:animate-ping"></span>
+           </button>
+           
+           <p className="text-[10px] text-gray-400 mt-4 max-w-[280px] italic">
+             *Note: Final checkout will be completed on our trusted e-commerce partner's platform.
+           </p>
+
+           {/* Scroll Indicator */}
+           <div className="flex flex-col items-center mt-12 text-primary opacity-60">
+             <span className="text-[10px] font-bold tracking-widest uppercase mb-2">Scroll</span>
+             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 animate-bounce">
+               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 5.25h-15m15 4.5h-15m15 4.5h-15m15 4.5h-15" />
+             </svg>
+           </div>
+        </div>
+      </section>
+
+      {/* Horizontal Carousel Section (Cards) */}
+      <section className="py-10 pb-20 relative z-10">
+        {/* We use negative margins to allow the scrollbar to bleed off screen edges smoothly */}
+        <div className="flex overflow-x-auto gap-6 px-6 md:px-12 pb-10 snap-x no-scrollbar">
           {[
-            { title: "Red Roses Elegance With Glass Vase", price: "249", img: "https://images.unsplash.com/photo-1563241598-6bbdb1e96723?w=300&h=300&fit=crop" },
-            { title: "Black Forest Cake (1 Kg)", price: "159", img: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&h=300&fit=crop" },
-            { title: "Personalised Magic Mug", price: "49", img: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=300&h=300&fit=crop" },
-            { title: "Mix Roses Bouquet", price: "199", img: "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=300&h=300&fit=crop" },
-            { title: "Ferrero Rocher Box - 16 Pcs", price: "89", img: "https://images.unsplash.com/photo-1511381939415-e440c9c36ba3?w=300&h=300&fit=crop" },
-            { title: "Lucky Bamboo Plant", price: "69", img: "https://images.unsplash.com/photo-1459156212016-c812468e2115?w=300&h=300&fit=crop" },
+            { 
+              title: "The Writer's Essentials Box", 
+              text: "The Writer's essentials box fountains penta-sorms and write pourier essentials.",
+              img: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400&h=400&fit=crop"
+            },
+            { 
+              title: "The Executive Pantry Box", 
+              text: "The executive pantry promotes handlersprins sany artisanal sacce and procils, fine art coasts and product cisentns.",
+              img: "https://images.unsplash.com/photo-1563241598-6bbdb1e96723?w=400&h=400&fit=crop"
+            },
+            { 
+              title: "The Morning Routine Sets", 
+              text: "A perfectly curated collection of morning essentials including artisanal coffee, a ceramic mug, and a daily planner.",
+              img: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=400&h=400&fit=crop"
+            },
+            { 
+              title: "The Relaxation Kit", 
+              text: "Unwind with our premium bath salts, artisanal candle, and a relaxing playlist card.",
+              img: "https://images.unsplash.com/photo-1559981421-3e0c0d5cb1ef?w=400&h=400&fit=crop"
+            }
           ].map((item, i) => (
-             <div key={i} className="w-[170px] md:w-[220px] flex-shrink-0">
-               <BoxItem title={item.title} price={item.price} image={item.img} />
-             </div>
+             <SplitCard key={i} title={item.title} text={item.text} image={item.img} />
           ))}
         </div>
       </section>
