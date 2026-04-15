@@ -16,6 +16,18 @@ const siteSettingsSchema = new mongoose.Schema({
       iconUrl: { type: String }
     }
   ],
+  occasionSections: [
+    {
+      sectionTitle: { type: String, default: '' },
+      occasions: [
+        {
+          label: { type: String, default: '' },
+          imageUrl: { type: String, default: '' },
+          redirectUrl: { type: String, default: '#' }
+        }
+      ]
+    }
+  ],
   navMenu: [
     {
       label: { type: String, default: 'Menu Item' },
