@@ -1,21 +1,35 @@
 import React, { useState, useEffect } from 'react';
 
-const SplitCard = ({ title, text, image, id }) => (
-  <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_15px_40px_rgb(0,0,0,0.1)] transition-shadow p-3 flex w-[320px] md:w-[380px] h-[160px] snap-center shrink-0 border border-gray-50 flex-row gap-4 group">
-    <div className="w-[120px] h-full rounded-xl overflow-hidden bg-gray-50 relative flex-shrink-0">
-      <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-    </div>
-    <div className="flex flex-col justify-between py-1 flex-grow">
-      <div>
-        <h3 className="text-[14px] md:text-[15px] font-bold text-dark leading-snug line-clamp-2">{title}</h3>
-        <p className="text-[10px] md:text-[11px] text-gray-500 mt-1.5 line-clamp-3 leading-relaxed">{text}</p>
+// New Vertical Product Card matching the screenshot
+const VerticalProductCard = ({ title, price, image, id, tagLabel, tagColor }) => {
+  const mockOldPrice = (price * 1.2).toFixed(2);
+  
+  return (
+    <a href={`/product/${id}`} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow flex flex-col w-[240px] snap-center shrink-0 border border-gray-200 overflow-hidden group">
+      <div className="w-full h-[240px] relative bg-gray-50 overflow-hidden">
+        <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        {tagLabel && (
+          <div 
+            className="absolute top-2 left-2 text-[10px] text-white font-bold px-2 py-0.5 rounded shadow-sm z-10"
+            style={{ backgroundColor: tagColor || '#ffbc00' }}
+          >
+            {tagLabel}
+          </div>
+        )}
       </div>
-      <a href={`/product/${id}`} className="bg-secondary text-white text-[11px] font-bold px-5 py-2 rounded-full w-max hover:-translate-y-0.5 hover:shadow-md transition-all uppercase tracking-wide inline-block text-center">
-        Buy Now
-      </a>
-    </div>
-  </div>
-);
+      <div className="p-4 flex flex-col gap-1.5 flex-grow">
+        <div className="flex items-center gap-1.5 mt-1">
+          <span className="text-gray-400 line-through text-[10px] font-medium">INR {mockOldPrice}</span>
+          <span className="text-[13px] font-bold text-dark">INR {price.toFixed(2)}</span>
+        </div>
+        <div className="text-[10px] text-gray-500 flex items-center gap-1">
+          4.75 <span className="text-[#ffbc00]">★</span> | 4.8 (4 reviews)
+        </div>
+        <h3 className="text-[13px] font-medium text-gray-800 leading-snug line-clamp-2 mt-1">{title}</h3>
+      </div>
+    </a>
+  );
+};
 
 // Occasion card exactly like the reference screenshot
 const OccasionCard = ({ label, imageUrl, redirectUrl }) => (
@@ -47,6 +61,7 @@ const Home = ({ settings }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentBanner, setCurrentBanner] = useState(0);
+  const [activeProductTab, setActiveProductTab] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -158,23 +173,67 @@ const Home = ({ settings }) => {
         )
       ))}
 
-      {/* ── Products Carousel ── */}
-      <section className="py-4 pb-16 relative z-10">
-        <div className="flex overflow-x-auto gap-6 px-6 md:px-12 pb-10 snap-x no-scrollbar">
-          {products.map(item => (
-            <SplitCard
-              key={item._id}
-              id={item._id}
-              title={item.name}
-              text={item.description}
-              image={item.images[0]}
-            />
-          ))}
-          {products.length === 0 && !loading && (
-            <div className="text-gray-400 font-medium py-10">No products found. Run seed script.</div>
+      {/* ── Products Carousel (Tabs) ── */}
+      {settings?.homeProductTabs?.length > 0 && (
+        <section className="relative z-10 w-full max-w-[1400px] mx-auto px-4 md:px-12 py-6 pb-16">
+          <div className="flex flex-col mb-6">
+             <div className="flex gap-6 overflow-x-auto no-scrollbar border-b border-gray-200 pb-2">
+               {settings.homeProductTabs.map((tab, idx) => (
+                 <button
+                   key={idx}
+                   onClick={() => setActiveProductTab(idx)}
+                   className={`text-[16px] md:text-[18px] font-bold whitespace-nowrap pb-2 ${activeProductTab === idx ? 'text-dark border-b-2 border-dark' : 'text-gray-400 hover:text-gray-600'}`}
+                 >
+                   {tab.tabTitle}
+                 </button>
+               ))}
+             </div>
+          </div>
+          <div className="flex overflow-x-auto gap-4 pb-6 snap-x no-scrollbar pt-2">
+            {settings.homeProductTabs[activeProductTab]?.products?.map((item, index) => {
+              const p = item.product;
+              if (!p) return null;
+              return (
+                <VerticalProductCard
+                  key={item._id || index}
+                  id={p._id}
+                  title={p.name}
+                  price={p.price || 0}
+                  image={p.images?.[0]}
+                  tagLabel={item.tagLabel}
+                  tagColor={item.tagColor}
+                />
+              );
+            })}
+            {settings.homeProductTabs[activeProductTab]?.products?.length === 0 && (
+              <div className="text-gray-400 font-medium py-10 w-full text-center border-2 border-dashed border-gray-200 rounded-xl">
+                No products found in this tab.
+              </div>
+            )}
+          </div>
+          
+          {/* View All Button */}
+          {settings.homeProductTabs[activeProductTab]?.products?.length > 0 && (
+            <div className="flex justify-center mt-2">
+               <a href="/products" className="bg-[#788a63] hover:bg-[#687a53] text-white text-[13px] font-bold px-8 py-2.5 rounded-full transition-colors shadow-sm">
+                  View all
+               </a>
+            </div>
           )}
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* Fallback old product carousel rendering if no tabs configured yet to prevent breaking */}
+      {(!settings?.homeProductTabs || settings.homeProductTabs.length === 0) && (
+          <section className="relative z-10 w-full max-w-[1400px] mx-auto px-4 md:px-12 py-6 pb-16">
+            <h2 className="text-[18px] md:text-[20px] font-bold text-dark font-serif tracking-tight mb-5">
+               All Products
+            </h2>
+            <div className="text-gray-400 font-medium py-10 w-full text-center border-2 border-dashed border-gray-200 rounded-xl">
+              No product tabs created. Please add them in Admin Panel.
+            </div>
+          </section>
+      )}
     </div>
   );
 };

@@ -37,6 +37,7 @@ router.put('/', async (req, res) => {
       settings.footerText = req.body.footerText || settings.footerText;
       settings.navMenu = req.body.navMenu || settings.navMenu;
       settings.occasionSections = req.body.occasionSections !== undefined ? req.body.occasionSections : settings.occasionSections;
+      settings.homeProductTabs = req.body.homeProductTabs !== undefined ? req.body.homeProductTabs : settings.homeProductTabs;
       
       const updatedSettings = await settings.save();
       res.json(updatedSettings);

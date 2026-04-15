@@ -44,6 +44,18 @@ const siteSettingsSchema = new mongoose.Schema({
       ]
     }
   ],
+  homeProductTabs: [
+    {
+      tabTitle: { type: String, required: true },
+      products: [
+        {
+          product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+          tagLabel: { type: String, default: '' },
+          tagColor: { type: String, default: '#ffbc00' }
+        }
+      ]
+    }
+  ],
   footerText: { type: String, default: '© 2026 AasanBuy. All rights reserved.' }
 }, {
   timestamps: true,

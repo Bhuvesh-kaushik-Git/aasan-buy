@@ -1,13 +1,52 @@
 import React, { useState, useEffect } from 'react';
+import ProductsModule from './ProductsModule';
+import CategoriesModule from './CategoriesModule';
+
+const ProductSearchSelector = ({ allProducts, selectedIds, onToggle }) => {
+  const [search, setSearch] = useState('');
+  const filtered = allProducts.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+  const displayProducts = search ? filtered : filtered.slice(0, 6);
+
+  return (
+    <div className="bg-gray-50 border border-gray-100 p-4 rounded-xl mt-4">
+       <input 
+          type="text" 
+          placeholder="Search to add products..." 
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-full text-sm px-3 py-2 border rounded-lg mb-3 focus:outline-none focus:border-secondary"
+       />
+       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+          {displayProducts.map(p => (
+            <label key={p._id} className="flex items-center gap-3 p-2 border border-gray-100 bg-white rounded-xl cursor-pointer hover:bg-secondary/5 transition-colors">
+              <input type="checkbox" checked={selectedIds.includes(p._id)} onChange={() => onToggle(p)} className="w-4 h-4 text-secondary accent-secondary" />
+              <img src={p.images?.[0]} alt="" className="w-8 h-8 rounded shrink-0 object-cover" />
+              <span className="text-xs font-medium truncate flex-1">{p.name}</span>
+            </label>
+          ))}
+       </div>
+       {!search && filtered.length > 6 && <div className="text-[10px] text-gray-400 mt-2 text-center">Search to find more products...</div>}
+    </div>
+  );
+};
 
 function App() {
   const [activeTab, setActiveTab] = useState('CMS');
   const [formData, setFormData] = useState({
     heroBanners: [],
     navMenu: [],
-    occasionSections: []
+    occasionSections: [],
+    homeProductTabs: []
   });
   const [loading, setLoading] = useState(false);
+  const [allProducts, setAllProducts] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/products')
+      .then(res => res.json())
+      .then(data => setAllProducts(data))
+      .catch(err => console.error("Error fetching products:", err));
+  }, []);
 
   // Fetch Settings on Load
   useEffect(() => {
@@ -18,7 +57,8 @@ function App() {
           setFormData({
             heroBanners: data.heroBanners || [],
             navMenu: data.navMenu || [],
-            occasionSections: data.occasionSections || []
+            occasionSections: data.occasionSections || [],
+            homeProductTabs: data.homeProductTabs || []
           });
         }
       })
@@ -123,6 +163,43 @@ function App() {
     setFormData(prev => ({ ...prev, navMenu: updated }));
   };
 
+  // ── Home Product Tabs Handlers ──
+  const handleAddProductTab = () => {
+    setFormData(prev => ({
+      ...prev,
+      homeProductTabs: [...(prev.homeProductTabs || []), { tabTitle: '', products: [] }]
+    }));
+  };
+  const handleRemoveProductTab = (tIdx) => {
+    const updated = [...formData.homeProductTabs];
+    updated.splice(tIdx, 1);
+    setFormData(prev => ({ ...prev, homeProductTabs: updated }));
+  };
+  const handleProductTabTitleChange = (tIdx, value) => {
+    const updated = [...formData.homeProductTabs];
+    updated[tIdx].tabTitle = value;
+    setFormData(prev => ({ ...prev, homeProductTabs: updated }));
+  };
+  const handleToggleProductInTab = (tIdx, productObj) => {
+    const updated = [...formData.homeProductTabs];
+    const existsIndex = updated[tIdx].products.findIndex(p => p.product === productObj._id || p.product?._id === productObj._id);
+    if (existsIndex > -1) {
+      updated[tIdx].products.splice(existsIndex, 1);
+    } else {
+      updated[tIdx].products.push({
+        product: productObj._id,
+        tagLabel: '',
+        tagColor: '#ffbc00'
+      });
+    }
+    setFormData(prev => ({ ...prev, homeProductTabs: updated }));
+  };
+  const handleProductTagChange = (tIdx, pIdx, field, value) => {
+    const updated = [...formData.homeProductTabs];
+    updated[tIdx].products[pIdx][field] = value;
+    setFormData(prev => ({ ...prev, homeProductTabs: updated }));
+  };
+
   // ── Save ──
   const handleSaveCMS = () => {
     setLoading(true);
@@ -132,7 +209,8 @@ function App() {
       body: JSON.stringify({
         heroBanners: formData.heroBanners,
         navMenu: formData.navMenu,
-        occasionSections: formData.occasionSections
+        occasionSections: formData.occasionSections,
+        homeProductTabs: formData.homeProductTabs
       })
     })
     .then(res => res.json())
@@ -282,6 +360,75 @@ function App() {
                 </div>
               </div>
 
+              {/* Home Page Products Section (Tabs) */}
+              <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden">
+                <div className="bg-[#fefaf4] p-6 border-b border-gray-100 flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg font-bold text-dark font-serif tracking-wide mb-1">Home Page Product Tabs</h3>
+                    <p className="text-[13px] text-gray-500">Create multiple tabs to organize products on the homepage.</p>
+                  </div>
+                  <button onClick={handleAddProductTab} className="bg-secondary text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-all flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    Add Tab
+                  </button>
+                </div>
+                <div className="p-8 space-y-8">
+                  {(formData.homeProductTabs || []).length === 0 && (
+                     <div className="text-center py-6 text-gray-400 border-2 border-dashed border-gray-100 rounded-xl">
+                        No product tabs created yet.
+                     </div>
+                  )}
+                  {(formData.homeProductTabs || []).map((tab, tIdx) => (
+                    <div key={tIdx} className="border-2 border-gray-100 rounded-xl p-5 relative bg-white shadow-sm">
+                      <button onClick={() => handleRemoveProductTab(tIdx)} className="absolute top-4 right-4 text-red-300 hover:text-red-500 transition-colors">
+                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                      <div className="mb-4 pr-12">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Tab Title (e.g. Best Sellers)</label>
+                        <input type="text" value={tab.tabTitle} onChange={e => handleProductTabTitleChange(tIdx, e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm font-bold focus:border-secondary focus:outline-none" />
+                      </div>
+                      
+                      {/* Render selected products so tags can be edited */}
+                      {tab.products?.length > 0 && (
+                        <div className="mb-6 bg-blue-50/30 p-4 rounded-xl border border-blue-100">
+                           <label className="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-3">Selected Products & Tags</label>
+                           <div className="space-y-3">
+                             {tab.products.map((tp, pIdx) => {
+                               let actualProduct = allProducts.find(p => p._id === tp.product || p._id === tp.product?._id);
+                               if(!actualProduct) return null;
+                               return (
+                                 <div key={pIdx} className="flex flex-wrap md:flex-nowrap items-center gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                                    <img src={actualProduct.images?.[0]} alt="" className="w-10 h-10 rounded shrink-0 object-cover" />
+                                    <div className="flex-1 min-w-[120px]">
+                                       <p className="text-xs font-bold truncate">{actualProduct.name}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <input type="text" value={tp.tagLabel || ''} onChange={e => handleProductTagChange(tIdx, pIdx, 'tagLabel', e.target.value)} placeholder="Badge Text" className="text-xs px-2 py-1.5 border border-gray-200 rounded w-[110px] focus:outline-none focus:border-secondary" />
+                                      <input type="color" value={tp.tagColor || '#ffbc00'} onChange={e => handleProductTagChange(tIdx, pIdx, 'tagColor', e.target.value)} className="w-8 h-8 rounded shrink-0 cursor-pointer border-0 p-0" title="Tag Color" />
+                                      <button onClick={() => handleToggleProductInTab(tIdx, actualProduct)} className="w-7 h-7 rounded bg-red-50 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors ml-2" title="Remove Product">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                      </button>
+                                    </div>
+                                 </div>
+                               )
+                             })}
+                           </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Add Products to Tab</label>
+                        <ProductSearchSelector 
+                           allProducts={allProducts}
+                           selectedIds={(tab.products || []).map(p => p.product?._id || p.product)}
+                           onToggle={(product) => handleToggleProductInTab(tIdx, product)}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex justify-center pb-12">
                 <button onClick={handleSaveCMS} disabled={loading} className="bg-primary text-white font-bold text-[14px] uppercase tracking-widest px-16 py-4 rounded-full shadow-2xl hover:bg-opacity-95 transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-50">
                   {loading ? 'Publishing Changes...' : 'Save & Publish Storefront Settings'}
@@ -420,6 +567,10 @@ function App() {
               )}
             </div>
 
+          ) : activeTab === 'Products' ? (
+            <ProductsModule />
+          ) : activeTab === 'Categories' ? (
+            <CategoriesModule />
           ) : (
             <div className="flex flex-col items-center justify-center h-[50vh] text-gray-400">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-16 h-16 mb-4 opacity-50"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>

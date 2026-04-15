@@ -6,7 +6,7 @@ const SiteSettings = require('../models/SiteSettings');
 // @route   GET /api/settings
 router.get('/', async (req, res) => {
   try {
-    const settings = await SiteSettings.findOne({});
+    const settings = await SiteSettings.findOne({}).populate('homeProductTabs.products.product');
     res.json(settings);
   } catch (err) {
     res.status(500).json({ message: err.message });
