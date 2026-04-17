@@ -52,8 +52,6 @@ function App() {
     localStorage.removeItem('aasanAdmin');
   };
 
-  if (!adminUser) return <AdminLogin onLogin={handleLogin} />;
-
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [formData, setFormData] = useState({
     heroBanners: [],
@@ -86,6 +84,8 @@ function App() {
       })
       .catch(err => console.error('Error fetching settings:', err));
   }, []);
+
+  if (!adminUser) return <AdminLogin onLogin={handleLogin} />;
 
   // ── Hero Banner Handlers ──
   const handleAddBanner = () => {
@@ -259,7 +259,7 @@ function App() {
           <div className="w-10 h-10 bg-secondary rounded-2xl flex items-center justify-center text-dark font-black text-xl shadow-lg shadow-secondary/20 transition-transform hover:rotate-12 duration-500">
             A
           </div>
-          <h1 className="text-xl font-black font-heading tracking-tight">Aasan<span className="text-secondary">Admin</span></h1>
+          <h1 className="text-xl font-black font-heading tracking-tight">Aasan Buy <span className="text-secondary">Admin Dashboard</span></h1>
         </div>
         <nav className="flex-1 mt-8 px-4">
           <ul className="space-y-2">

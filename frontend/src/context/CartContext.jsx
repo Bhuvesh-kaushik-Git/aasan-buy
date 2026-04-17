@@ -6,19 +6,17 @@ export const useCart = () => useContext(CartContext);
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const CartProvider = ({ children }) => {
-  const [cart, setCart] = useState([]);
-  const [stockWarnings, setStockWarnings] = useState({}); // { productId: availableStock }
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isValidatingStock, setIsValidatingStock] = useState(false);
-
-  // Load from localStorage
-  useEffect(() => {
-    const savedCart = localStorage.getItem('aasanCart');
-    if (savedCart) {
-      try { setCart(JSON.parse(savedCart)); } catch (e) { console.error('Cart parse error'); }
+  const [cart, setCart] = useState(() => {
+    try {
+      const savedCart = localStorage.getItem('aasanCart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (e) {
+      return [];
     }
-    setIsInitialized(true);
-  }, []);
+  });
+  const [stockWarnings, setStockWarnings] = useState({}); // { productId: availableStock }
+  const [isInitialized, setIsInitialized] = useState(true);
+  const [isValidatingStock, setIsValidatingStock] = useState(false);
 
   // Save to localStorage
   useEffect(() => {

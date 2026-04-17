@@ -8,6 +8,8 @@ import Checkout from './pages/Checkout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
+import Contact from './pages/Contact';
+import ThankYou from './pages/ThankYou';
 import Footer from './components/Footer';
 import { useCart } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
@@ -181,6 +183,8 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/contact-us" element={<Contact />} />
+          <Route path="/thank-you" element={<ThankYou />} />
         </Routes>
       </main>
       <Footer />

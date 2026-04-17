@@ -56,7 +56,7 @@ const Profile = () => {
         {[
           { icon: '🛍️', label: 'Continue Shopping', to: '/products' },
           { icon: '📦', label: 'Track an Order', to: '/products' },
-          { icon: '💬', label: 'Contact Support', to: '/' },
+          { icon: '💬', label: 'Contact Support', to: '/contact-us' },
         ].map(item => (
           <Link key={item.label} to={item.to} className="bg-white border border-gray-100 rounded-2xl p-5 flex flex-col items-center gap-2 text-center hover:shadow-md hover:border-secondary/30 transition-all">
             <span className="text-3xl">{item.icon}</span>

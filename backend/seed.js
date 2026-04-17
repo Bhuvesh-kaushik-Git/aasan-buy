@@ -74,18 +74,43 @@ const seedData = async () => {
     const createdProducts = await Product.insertMany(products);
     console.log(`${createdProducts.length} Products Successfully Seeded!`);
 
-    // Optional: Seed Settings if empty
-    const settingsCount = await SiteSettings.countDocuments();
-    if (settingsCount === 0) {
-      await SiteSettings.create({
-        heroBanner: {
-          title: "Make Every Moment Special",
-          subtitle: "Order premium flowers, delicious cakes, and personalized gifts in Qatar.",
-          imageUrl: "https://images.unsplash.com/photo-1563241598-6bbdb1e96723"
+    await SiteSettings.deleteMany({});
+    await SiteSettings.create({
+      heroBanners: [{
+        title: "Make Every Moment Special",
+        subtitle: "Order premium flowers, delicious cakes, and personalized gifts in Qatar.",
+        imageUrl: "/hero_banner.png",
+        linkUrl: "/products"
+      }],
+      navMenu: [
+        { label: "Flowers" },
+        { label: "Cakes" },
+        { label: "Combos" },
+        { label: "Gifts" }
+      ],
+      occasionSections: [
+        {
+          sectionTitle: "Celebrate With Us",
+          occasions: [
+            { label: "Birthday", imageUrl: "https://images.unsplash.com/photo-1530103862676-de889c25e24b?w=400&q=80", redirectUrl: "/products" },
+            { label: "Anniversary", imageUrl: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&q=80", redirectUrl: "/products" },
+            { label: "Valentine", imageUrl: "https://images.unsplash.com/photo-1563241598-6bbdb1e96723?w=400&q=80", redirectUrl: "/products" },
+            { label: "Congratulations", imageUrl: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&q=80", redirectUrl: "/products" }
+          ]
         }
-      });
-      console.log('Default Site Settings Seeded!');
-    }
+      ],
+      homeProductTabs: [
+        {
+          tabTitle: "Best Sellers",
+          products: createdProducts.slice(0, 4).map((p, i) => ({
+            product: p._id,
+            tagLabel: i === 0 ? "Bestseller" : i === 1 ? "New Arrival" : "",
+            tagColor: i === 0 ? "#EAB308" : "#EC4899"
+          }))
+        }
+      ]
+    });
+    console.log('Default Site Settings Seeded!');
 
     process.exit();
   } catch (err) {
