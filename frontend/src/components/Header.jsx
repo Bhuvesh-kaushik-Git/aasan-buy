@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -10,8 +10,15 @@ const Header = ({ settings, onOpenCart }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { cartCount } = useCart();
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (location.pathname !== '/products') {
+      setSearchQuery('');
+    }
+  }, [location.pathname]);
 
   // Debounced search logic for suggestions
   useEffect(() => {
@@ -144,9 +151,9 @@ const Header = ({ settings, onOpenCart }) => {
           <nav className="flex items-center gap-10 h-full" onMouseLeave={() => setHoveredMenu(null)}>
             {navMenu.map((menu, idx) => (
               <div key={idx} className="relative h-full flex items-center" onMouseEnter={() => setHoveredMenu(idx)}>
-                 <button className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all ${hoveredMenu === idx ? 'text-primary' : 'text-gray-400 hover:text-dark'}`}>
+                 <Link to={`/products?category=${menu.label.toLowerCase()}`} className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all ${hoveredMenu === idx ? 'text-primary' : 'text-gray-400 hover:text-dark'}`}>
                     {menu.label}
-                 </button>
+                 </Link>
                  {hoveredMenu === idx && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-secondary rounded-full animate-fade-in" />}
               </div>
             ))}

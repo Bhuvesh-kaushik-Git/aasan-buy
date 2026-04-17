@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -30,7 +31,7 @@ const Footer = () => {
               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 mb-8 font-heading">Collections</h3>
               <ul className="space-y-4 text-[13px] font-bold text-white/60">
                 {['Curated Flowers', 'Luxe Cakes', 'Personalised Joy', 'Combos'].map((link) => (
-                  <li key={link}><a href="#" className="hover:text-secondary transition-colors block">{link}</a></li>
+                  <li key={link}><Link to={`/products`} className="hover:text-secondary transition-colors block">{link}</Link></li>
                 ))}
               </ul>
             </div>
@@ -38,7 +39,7 @@ const Footer = () => {
               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 mb-8 font-heading">Trust & Legal</h3>
               <ul className="space-y-4 text-[13px] font-bold text-white/60">
                 {['Our Story', 'Terms of Service', 'Privacy Policy', 'Shipping Policy', 'Contact Us'].map((link) => (
-                  <li key={link}><a href="#" className="hover:text-secondary transition-colors block">{link}</a></li>
+                  <li key={link}><Link to={`/${link.toLowerCase().replace(/ /g, '-')}`} className="hover:text-secondary transition-colors block">{link}</Link></li>
                 ))}
               </ul>
             </div>

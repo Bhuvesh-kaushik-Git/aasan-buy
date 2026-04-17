@@ -40,7 +40,7 @@ const Register = () => {
             {[
               { label: 'Full Name', key: 'name', type: 'text', placeholder: 'John Doe' },
               { label: 'Email Address', key: 'email', type: 'email', placeholder: 'you@example.com' },
-              { label: 'Phone Number', key: 'phone', type: 'tel', placeholder: '+974 XXXX XXXX' },
+              { label: 'Phone Number', key: 'phone', type: 'tel', placeholder: '+91 XXXX XXXXXX' },
               { label: 'Password', key: 'password', type: 'password', placeholder: '•••••••• (min. 6 chars)' },
               { label: 'Confirm Password', key: 'confirm', type: 'password', placeholder: '••••••••' },
             ].map(({ label, key, type, placeholder }) => (

@@ -134,7 +134,7 @@ const Checkout = () => {
       if (paymentMethod === 'cod') {
         clearCart();
         showToast('🎉 Order placed successfully! You will pay on delivery.', 'success');
-        navigate('/', { state: { orderSuccess: true } });
+        navigate('/thank-you', { state: { orderSuccess: true } });
       } else {
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -158,7 +158,7 @@ const Checkout = () => {
             if (vData.success) {
               clearCart();
               showToast('✅ Payment verified! Order confirmed.', 'success');
-              navigate('/');
+              navigate('/thank-you', { state: { orderSuccess: true } });
             } else {
               setError('Payment verification failed. Please contact support.');
             }
