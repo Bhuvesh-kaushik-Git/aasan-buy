@@ -1,0 +1,158 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, Link } from 'react-router-dom';
+
+const API_URL = import.meta.env.VITE_API_URL;
+const LIMIT = 20;
+
+const Products = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const searchQuery = searchParams.get('search') || '';
+  const categoryQuery = searchParams.get('category') || '';
+
+  const fetchProducts = useCallback(async (p = 1) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page: p, limit: LIMIT });
+      if (searchQuery) params.set('search', searchQuery);
+      if (categoryQuery) params.set('category', categoryQuery);
+
+      const res = await fetch(`${API_URL}/api/products?${params}`);
+      const data = await res.json();
+      setProducts(data.products || []);
+      setTotalPages(data.pages || 1);
+      setTotal(data.total || 0);
+      setPage(p);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, categoryQuery]);
+
+  useEffect(() => { fetchProducts(1); }, [fetchProducts]);
+
+  const title = searchQuery
+    ? `Results for "${searchQuery}"`
+    : categoryQuery
+    ? `${categoryQuery}`
+    : 'All Collections';
+
+  return (
+    <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 bg-[#FAFAFB] min-h-screen">
+      
+      {/* Header & Stats */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 border-l-4 border-primary pl-6">
+        <div>
+          <h1 className="text-4xl font-black font-heading text-dark tracking-tight leading-tight">{title}</h1>
+          {!loading && <p className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] mt-2">{total} hand-picked items</p>}
+        </div>
+        <div className="flex gap-4">
+             {/* Filter/Sort placeholders could go here */}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+          {[...Array(10)].map((_, i) => (
+            <div key={i} className="flex flex-col gap-4">
+                 <div className="bg-white rounded-[24px] aspect-square animate-pulse border border-gray-100 shadow-soft" />
+                 <div className="h-4 bg-gray-200 rounded-full w-2/3 animate-pulse" />
+                 <div className="h-4 bg-gray-100 rounded-full w-1/3 animate-pulse" />
+            </div>
+          ))}
+        </div>
+      ) : products.length > 0 ? (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+            {products.map(p => (
+              <Link 
+                to={`/product/${p._id}`} 
+                key={p._id} 
+                className="group flex flex-col bg-white rounded-[32px] shadow-soft hover:shadow-premium transition-all duration-500 overflow-hidden border border-gray-100"
+              >
+                <div className="w-full aspect-square relative bg-[#F8F9FB] overflow-hidden">
+                  <img src={p.images?.[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
+                  {p.stock === 0 && (
+                    <div className="absolute inset-0 bg-dark/40 backdrop-blur-[2px] flex items-center justify-center">
+                      <span className="bg-white text-dark text-[9px] font-black px-4 py-1.5 rounded-xl tracking-widest uppercase">Sold Out</span>
+                    </div>
+                  )}
+                  {p.mrp > p.price && (
+                    <div className="absolute top-4 left-4 bg-cta-buy text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-lg">
+                      {Math.round(((p.mrp - p.price) / p.mrp) * 100)}% OFF
+                    </div>
+                  )}
+                </div>
+                <div className="p-6 flex flex-col gap-2 flex-grow">
+                   <div className="flex items-center gap-2 mb-1">
+                      <span className="font-black text-primary text-[15px]">₹{p.price.toLocaleString()}</span>
+                      {p.mrp > p.price && <span className="text-gray-300 line-through text-[11px] font-bold italic">₹{p.mrp.toLocaleString()}</span>}
+                  </div>
+                  <h3 className="text-[13px] font-bold text-dark group-hover:text-primary transition-colors leading-snug line-clamp-2 h-10">{p.name}</h3>
+                  
+                  {p.rating > 0 && (
+                    <div className="flex items-center gap-1.5 mt-2 border-t border-gray-50 pt-3">
+                      <div className="flex text-secondary text-[10px]">★★★★<span className="text-gray-200">★</span></div>
+                      <span className="text-[10px] text-gray-400 font-black tracking-tighter">({p.reviewCount})</span>
+                    </div>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Pagination 2.0 */}
+          {totalPages > 1 && (
+            <div className="mt-20 flex justify-center items-center gap-4">
+              <button
+                onClick={() => fetchProducts(page - 1)}
+                disabled={page === 1}
+                className="w-12 h-12 rounded-2xl border-2 border-gray-100 flex items-center justify-center text-gray-400 hover:border-primary hover:text-primary transition-all disabled:opacity-20 shadow-soft"
+              >
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
+              </button>
+              
+              <div className="flex gap-2">
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => fetchProducts(i + 1)}
+                      className={`w-12 h-12 rounded-2xl font-black text-sm transition-all ${page === i + 1 ? 'bg-primary text-white shadow-xl shadow-primary/20 scale-110' : 'bg-white border-2 border-gray-50 text-gray-300 hover:border-primary hover:text-primary'}`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+              </div>
+
+              <button
+                onClick={() => fetchProducts(page + 1)}
+                disabled={page === totalPages}
+                className="w-12 h-12 rounded-2xl border-2 border-gray-100 flex items-center justify-center text-gray-400 hover:border-primary hover:text-primary transition-all disabled:opacity-20 shadow-soft"
+              >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+              </button>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="min-h-[50vh] flex flex-col items-center justify-center px-6 animate-fade-in text-center">
+          <div className="w-24 h-24 bg-white rounded-[32px] shadow-soft flex items-center justify-center mb-6 border border-gray-100">
+             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-12 h-12 text-gray-200"><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+          </div>
+          <h2 className="text-2xl font-black font-heading text-dark mb-2">Nothing Found</h2>
+          <p className="text-sm text-gray-400 font-medium mb-8 max-w-xs">We couldn't find any items matching your search. Try another vibe or explore all.</p>
+          <Link to="/products" className="bg-primary text-white px-10 py-4 rounded-2xl font-black text-sm shadow-xl shadow-primary/20 hover:-translate-y-1 transition-all">Clear All Filters</Link>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Products;

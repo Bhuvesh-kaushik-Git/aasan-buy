@@ -1,30 +1,83 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const Review = require('../models/Review');
+const { protect } = require('../middleware/auth');
 
-// @desc    Get all products
-// @route   GET /api/products
+// @route  GET /api/products  – Paginated + Search
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find({});
-    res.json(products);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+    const search = req.query.search || '';
+    const category = req.query.category || '';
+
+    const query = {};
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { brand: { $regex: search, $options: 'i' } },
+        { categories: { $regex: search, $options: 'i' } },
+      ];
+    }
+    if (category) {
+      query.categories = { $regex: category, $options: 'i' };
+    }
+
+    const total = await Product.countDocuments(query);
+    const products = await Product.find(query).skip(skip).limit(limit).sort({ createdAt: -1 });
+    res.json({ products, total, page, pages: Math.ceil(total / limit) });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// @desc    Get single product by ID
-// @route   GET /api/products/:id
+// @route  GET /api/products/:id  – Single product
 router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (product) {
-      res.json(product);
-    } else {
-      res.status(404).json({ message: 'Product not found' });
-    }
+    if (product) res.json(product);
+    else res.status(404).json({ message: 'Product not found' });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// @route  GET /api/products/:id/reviews  – only approved reviews shown publicly
+router.get('/:id/reviews', async (req, res) => {
+  try {
+    const reviews = await Review.find({ product: req.params.id, status: 'approved' })
+      .populate('user', 'name')
+      .sort({ createdAt: -1 });
+    res.json(reviews);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// @route  POST /api/products/:id/reviews  – submit review (goes to pending queue)
+router.post('/:id/reviews', async (req, res) => {
+  try {
+    const { rating, title, comment, guestName } = req.body;
+    if (!rating || !comment) return res.status(400).json({ error: 'Rating and comment required' });
+
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+
+    const review = await Review.create({
+      product: req.params.id,
+      user: req.user ? req.user._id : null,
+      guestName: req.user ? undefined : (guestName || 'Anonymous'),
+      rating,
+      title,
+      comment,
+      status: 'pending', // Always pending – admin must approve
+    });
+
+    res.status(201).json({ success: true, message: 'Your review has been submitted and is awaiting approval.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

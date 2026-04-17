@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import * as XLSX from 'xlsx';
+import TagInput from './components/TagInput';
 
 export default function ProductsModule() {
   const [products, setProducts] = useState([]);
@@ -139,14 +140,25 @@ export default function ProductsModule() {
     const method = isNew ? 'POST' : 'PUT';
 
     try {
+      const payload = { ...editingProduct };
+      
+      // Ensure arrays are sent correctly (no extra mapping needed here as TagInput handles it)
+      payload.images = Array.isArray(payload.images) ? payload.images : [];
+      payload.categories = Array.isArray(payload.categories) ? payload.categories : [];
+      payload.sizes = Array.isArray(payload.sizes) ? payload.sizes : [];
+      payload.highlights = Array.isArray(payload.highlights) ? payload.highlights : [];
+      
+      if (payload.colors && payload.colors.length > 0) {
+         payload.colors = payload.colors.map(col => ({
+             ...col,
+             images: Array.isArray(col.images) ? col.images : []
+         }));
+      }
+
       await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            ...editingProduct,
-            images: Array.isArray(editingProduct.images) ? editingProduct.images : String(editingProduct.images || '').split(',').map(s => s.trim()).filter(Boolean),
-            categories: Array.isArray(editingProduct.categories) ? editingProduct.categories : String(editingProduct.categories || '').split(',').map(s => s.trim()).filter(Boolean)
-        })
+        body: JSON.stringify(payload)
       });
       setEditingProduct(null);
       fetchProducts();
@@ -177,12 +189,20 @@ export default function ProductsModule() {
                 <input type="text" value={editingProduct.sku || ''} onChange={e => setEditingProduct(p => ({...p, sku: e.target.value}))} className="w-full border border-gray-200 rounded-lg px-4 py-2 bg-gray-50 focus:bg-white focus:outline-none focus:border-secondary transition-colors" />
               </div>
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-2">Price (INR)</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-2">Price (INR/₹)</label>
                 <input required type="number" min="0" step="0.01" value={editingProduct.price || ''} onChange={e => setEditingProduct(p => ({...p, price: Number(e.target.value)}))} className="w-full border border-gray-200 rounded-lg px-4 py-2 bg-gray-50 focus:bg-white focus:outline-none focus:border-secondary transition-colors" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-2">Original MRP (INR/₹)</label>
+                <input type="number" min="0" step="0.01" value={editingProduct.mrp || ''} onChange={e => setEditingProduct(p => ({...p, mrp: Number(e.target.value)}))} className="w-full border border-gray-200 rounded-lg px-4 py-2 bg-gray-50 focus:bg-white focus:outline-none focus:border-secondary transition-colors" placeholder="Used to calc discount" />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-2">Inventory Stock</label>
                 <input type="number" min="0" value={editingProduct.stock || ''} onChange={e => setEditingProduct(p => ({...p, stock: Number(e.target.value)}))} className="w-full border border-gray-200 rounded-lg px-4 py-2 bg-gray-50 focus:bg-white focus:outline-none focus:border-secondary transition-colors" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-2">Brand</label>
+                <input type="text" value={editingProduct.brand || ''} onChange={e => setEditingProduct(p => ({...p, brand: e.target.value}))} className="w-full border border-gray-200 rounded-lg px-4 py-2 bg-gray-50 focus:bg-white focus:outline-none focus:border-secondary transition-colors" placeholder="e.g. boAt, Sony" />
               </div>
               <div className="col-span-2">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-2">Select Categories</label>
@@ -211,8 +231,41 @@ export default function ProductsModule() {
                 </div>
               </div>
               <div className="col-span-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-2">Image URLs (comma separated)</label>
-                 <textarea value={Array.isArray(editingProduct.images) ? editingProduct.images.join(', ') : editingProduct.images || ''} onChange={e => setEditingProduct(p => ({...p, images: e.target.value}))} className="w-full border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 focus:bg-white focus:outline-none focus:border-secondary transition-colors h-24" />
+                <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-3">Product Images (Gallery)</label>
+                <TagInput tags={editingProduct.images || []} setTags={(tags) => setEditingProduct(p => ({...p, images: tags}))} placeholder="Enter image URL and press Enter" />
+              </div>
+
+              <div className="col-span-2">
+                <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-3">Available Sizes / Variants</label>
+                <TagInput tags={editingProduct.sizes || []} setTags={(tags) => setEditingProduct(p => ({...p, sizes: tags}))} placeholder="e.g. S, M, L or 250g, 500g" />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-3">Product Highlights (Key Benefits)</label>
+                <TagInput tags={editingProduct.highlights || []} setTags={(tags) => setEditingProduct(p => ({...p, highlights: tags}))} placeholder="e.g. Organic, Fast Charging" />
+              </div>
+              
+              <div className="col-span-2 bg-gray-50 border border-gray-200 p-4 rounded-xl">
+                 <div className="flex justify-between items-center mb-4">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block">Colors & Variants Data</label>
+                    <button type="button" onClick={() => setEditingProduct(p => ({...p, colors: [...(p.colors||[]), {name: '', hex: '#000000', images: []}]}))} className="text-[11px] font-bold bg-white border border-gray-200 px-3 py-1.5 rounded shadow-sm hover:bg-gray-100 transition-colors">+ Add Color Variant</button>
+                 </div>
+                 <div className="space-y-3 max-h-48 overflow-y-auto custom-scrollbar pr-2">
+                    {(editingProduct.colors || []).map((col, idx) => (
+                       <div key={idx} className="flex flex-col gap-2 bg-white p-3 rounded-lg border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.01)] relative">
+                          <button type="button" onClick={() => { const newC = [...editingProduct.colors]; newC.splice(idx, 1); setEditingProduct(p => ({...p, colors: newC})); }} className="absolute -top-2 -right-2 w-6 h-6 flex items-center justify-center bg-red-500 text-white rounded-full transition-colors text-[10px] shadow-sm z-10">✕</button>
+                          
+                           <div className="flex flex-col gap-4">
+                              <div className="flex items-center gap-3">
+                                 <input type="color" value={col.hex} onChange={e => { const newC = [...editingProduct.colors]; newC[idx].hex = e.target.value; setEditingProduct(p => ({...p, colors: newC})); }} className="w-10 h-10 rounded shrink-0 cursor-pointer border-0 p-0" title="Hex code" />
+                                 <input type="text" placeholder="Color Name (e.g. Midnight Blue)" value={col.name} onChange={e => { const newC = [...editingProduct.colors]; newC[idx].name = e.target.value; setEditingProduct(p => ({...p, colors: newC})); }} className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] text-dark focus:outline-none focus:border-secondary" />
+                              </div>
+                              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Variant Images (URLs)</label>
+                              <TagInput tags={col.images || []} setTags={(tags) => { const newC = [...editingProduct.colors]; newC[idx].images = tags; setEditingProduct(p => ({...p, colors: newC})); }} placeholder="Paste image URL and Enter" />
+                           </div>
+                       </div>
+                    ))}
+                    {(!editingProduct.colors || editingProduct.colors.length === 0) && <p className="text-xs text-gray-400 italic">No colors configured.</p>}
+                 </div>
               </div>
               <div className="col-span-2">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-2">Description</label>

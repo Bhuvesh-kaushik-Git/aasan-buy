@@ -1,192 +1,375 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
+import { useToast } from '../components/Toast';
 
-const SuggestionModal = ({ isOpen, onClose, onContinue }) => {
+const API_URL = import.meta.env.VITE_API_URL;
+
+// ── Components ──────────────────────────────────────────────────────────────
+
+const SuggestionModal = ({ isOpen, onClose, onViewCart }) => {
   if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0 font-sans">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative bg-white rounded shadow-2xl w-full max-w-3xl overflow-hidden animate-fade-in-up">
-        {/* Header - FNP Style (minimal, centered text, x top right) */}
-        <div className="p-4 flex justify-center items-center text-dark relative border-b border-gray-100 bg-[#f9f9f9]">
-          <h3 className="text-lg font-bold">Make It More Special</h3>
-          <button onClick={onClose} className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-white rounded-full text-gray-500 hover:text-dark border shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 font-sans animate-fade-in">
+      <div className="absolute inset-0 bg-dark/60 backdrop-blur-md" onClick={onClose} />
+      <div className="relative bg-white rounded-3xl shadow-premium w-full max-w-2xl overflow-hidden animate-fade-in-up">
+        <div className="p-5 flex justify-center items-center relative border-b border-gray-100 bg-gray-50/50">
+          <h3 className="text-xl font-black font-heading text-primary">Make It Extra Special</h3>
+          <button onClick={onClose} className="absolute right-5 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white rounded-full text-gray-400 hover:text-primary border border-gray-100 shadow-soft transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
           </button>
         </div>
-
-        {/* Content */}
-        <div className="p-6 bg-[#fafafa]">
+        <div className="p-8">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { title: "Dairy Milk Silk", price: "25", img: "https://images.unsplash.com/photo-1548845971-eb6df5c68b64?w=150&h=150&fit=crop" },
-              { title: "Happy Birthday Balloon", price: "15", img: "https://images.unsplash.com/photo-1530103862676-de8892bf309c?w=150&h=150&fit=crop" },
-              { title: "Greeting Card", price: "10", img: "https://images.unsplash.com/photo-1596482163351-7871b6980db7?w=150&h=150&fit=crop" },
-              { title: "Cute Teddy Bear", price: "45", img: "https://images.unsplash.com/photo-1559981421-3e0c0d5cb1ef?w=150&h=150&fit=crop" },
+              { title: 'Dairy Milk Silk', price: '125', img: 'https://images.unsplash.com/photo-1548845971-eb6df5c68b64?w=150&h=150&fit=crop' },
+              { title: 'Golden Balloon', price: '75', img: 'https://images.unsplash.com/photo-1530103862676-de8892bf309c?w=150&h=150&fit=crop' },
+              { title: 'Luxury Card', price: '99', img: 'https://images.unsplash.com/photo-1596482163351-7871b6980db7?w=150&h=150&fit=crop' },
+              { title: 'Premium Bear', price: '499', img: 'https://images.unsplash.com/photo-1559981421-3e0c0d5cb1ef?w=150&h=150&fit=crop' },
             ].map((item, i) => (
-              <div key={i} className="border border-gray-200 bg-white rounded-lg p-3 flex flex-col items-center text-center transition-colors">
-                <img src={item.img} alt={item.title} className="w-[70px] h-[70px] object-cover rounded mb-3" />
-                <span className="text-[12px] font-semibold text-gray-700 line-clamp-1 mb-1">{item.title}</span>
-                <span className="text-[13px] text-dark font-bold mb-3 font-sans">QAR {item.price}</span>
-                <button className="w-full text-[12px] font-bold text-primary border border-primary px-4 py-1.5 rounded hover:bg-primary hover:text-white transition-colors uppercase tracking-wide">Add</button>
+              <div key={i} className="group bg-white rounded-2xl p-3 flex flex-col items-center text-center border border-gray-100 shadow-soft hover:shadow-premium transition-all">
+                <div className="w-20 h-20 rounded-xl bg-gray-50 overflow-hidden mb-3">
+                  <img src={item.img} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                </div>
+                <span className="text-[11px] font-bold text-gray-500 mb-1 leading-tight">{item.title}</span>
+                <span className="text-[13px] font-black text-primary mb-3">₹{item.price}</span>
+                <button className="w-full text-[10px] font-black text-white bg-primary rounded-lg py-2 transition-all hover:bg-primary-light">Add to Box</button>
               </div>
             ))}
           </div>
         </div>
-
-        {/* Footer Actions */}
-        <div className="p-4 bg-white border-t border-gray-100 flex justify-end gap-4">
-            <button onClick={onContinue} className="text-[13px] font-bold text-gray-500 hover:text-dark px-4 py-2 uppercase underline tracking-wider">Skip & Continue</button>
-            <button onClick={onContinue} className="bg-primary text-white px-8 py-2.5 rounded font-bold uppercase hover:bg-opacity-90 shadow-sm text-[13px] tracking-wider transition-colors">Proceed</button>
+        <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-between items-center gap-4">
+          <button onClick={onClose} className="text-sm font-black text-gray-400 hover:text-dark px-6 py-3 border border-gray-200 rounded-2xl bg-white hover:bg-gray-50 transition-all">
+            No, Thanks
+          </button>
+          <button onClick={onViewCart} className="flex-1 bg-secondary text-white px-8 py-3.5 rounded-2xl font-black text-sm hover:shadow-lg hover:shadow-secondary/30 transition-all transform hover:-translate-y-0.5">
+            Checkout Now →
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-const ProductDetails = ({ onOpenCart }) => {
-  const { id } = useParams();
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [activeImg, setActiveImg] = useState(0);
-  const [showModal, setShowModal] = useState(false);
-  
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const res = await fetch(`http://localhost:5000/api/products/${id}`);
-        if (!res.ok) throw new Error('Product not found');
-        const data = await res.json();
-        setProduct(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProduct();
-  }, [id]);
+const StarRating = ({ value, size = 'md', onChange }) => (
+  <div className="flex gap-1">
+    {[1, 2, 3, 4, 5].map(s => (
+      <button
+        key={s} type="button"
+        onClick={() => onChange && onChange(s)}
+        className={`${size === 'sm' ? 'text-sm' : 'text-2xl'} transition-colors ${s <= value ? 'text-secondary' : 'text-gray-200'} ${onChange ? 'cursor-pointer' : 'cursor-default'}`}
+      >★</button>
+    ))}
+  </div>
+);
 
-  const handleAddToCart = () => {
-    setShowModal(true);
+const ReviewsSection = ({ productId }) => {
+  const [reviews, setReviews] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ rating: 5, title: '', comment: '', guestName: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/products/${productId}/reviews`)
+      .then(r => r.json())
+      .then(data => setReviews(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, [productId]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${API_URL}/api/products/${productId}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        setShowForm(false);
+        setForm({ rating: 5, title: '', comment: '', guestName: '' });
+        showToast("Review submitted for moderation! ✨", "success");
+      }
+    } catch {
+        showToast("Error submitting review. Try again.", "error");
+    }
+    setSubmitting(false);
   };
 
-  if (loading) return <div className="min-h-[60vh] flex items-center justify-center font-bold text-secondary animate-pulse">Loading Product...</div>;
-  if (error) return <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-    <div className="text-red-500 font-bold">{error}</div>
-    <a href="/" className="text-secondary underline">Back to Home</a>
+  return (
+    <div className="mt-20 border-t border-gray-100 pt-16">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+        <div className="border-l-4 border-primary pl-4">
+          <h2 className="text-2xl font-black font-heading text-dark">Verified Reviews</h2>
+          <p className="text-sm text-gray-500 font-medium">Hear from our community of gifters</p>
+        </div>
+        <button 
+          onClick={() => setShowForm(!showForm)} 
+          className="bg-white border-2 border-primary text-primary font-black px-6 py-3 rounded-2xl text-sm hover:bg-primary hover:text-white transition-all transform hover:-translate-y-1"
+        >
+          {showForm ? 'Cancel' : '+ Share Your Vibe'}
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="bg-white border border-gray-100 shadow-premium rounded-[32px] p-8 mb-12 animate-fade-in-up">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">My Rating</label>
+                <StarRating value={form.rating} onChange={v => setForm({ ...form, rating: v })} />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">My Name</label>
+                <input value={form.guestName} onChange={e => setForm({ ...form, guestName: e.target.value })} placeholder="Alex R." className="w-full bg-gray-50 border border-transparent rounded-xl px-4 py-3 text-sm focus:bg-white focus:border-primary focus:outline-none transition-all" />
+              </div>
+           </div>
+           <div className="mb-6">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Headline</label>
+              <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="E.g. Pure Joy!" className="w-full bg-gray-50 border border-transparent rounded-xl px-4 py-3 text-sm focus:bg-white focus:border-primary focus:outline-none transition-all" />
+           </div>
+           <div className="mb-6">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Experience</label>
+              <textarea required rows={4} value={form.comment} onChange={e => setForm({ ...form, comment: e.target.value })} placeholder="Tell us more about it..." className="w-full bg-gray-50 border border-transparent rounded-2xl px-4 py-3 text-sm focus:bg-white focus:border-primary focus:outline-none transition-all resize-none" />
+           </div>
+           <button type="submit" disabled={submitting} className="w-full md:w-auto bg-primary text-white font-black px-12 py-4 rounded-2xl text-sm shadow-xl hover:-translate-y-1 transition-all disabled:opacity-50">
+             {submitting ? 'Submitting...' : 'Post Verified Review'}
+           </button>
+        </form>
+      )}
+
+      {reviews.length === 0 ? (
+        <div className="text-center py-20 bg-white rounded-[32px] border-2 border-dashed border-gray-100">
+          <span className="text-5xl block mb-4">✨</span>
+          <p className="font-heading font-black text-xl text-gray-400">Be the pioneer reviewer</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {reviews.map((r, i) => (
+            <div key={i} className="bg-white border border-gray-100 rounded-3xl p-8 shadow-soft hover:shadow-premium transition-all">
+               <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-primary/5 text-primary font-black flex items-center justify-center border border-primary/10">
+                      {(r.user?.name || r.guestName || 'A')[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="font-black text-dark text-sm leading-none">{r.user?.name || r.guestName || 'Anonymous'}</h4>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <StarRating value={r.rating} size="sm" />
+                        <span className="text-[10px] text-gray-400 font-bold uppercase">{new Date(r.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {r.isVerifiedPurchase && <span className="bg-emerald-50 text-emerald-600 text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-widest">Verified Buyer</span>}
+               </div>
+               {r.title && <h5 className="font-black text-primary text-sm mb-2">{r.title}</h5>}
+               <p className="text-gray-500 text-[13px] leading-relaxed font-medium italic">"{r.comment}"</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── Main Page ─────────────────────────────────────────────────────────────
+
+const ProductDetails = ({ onOpenCart }) => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeImg, setActiveImg] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const { addToCart } = useCart();
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/products/${id}`)
+      .then(res => res.json())
+      .then(data => {
+        setProduct(data);
+        if (data.colors?.length > 0) setSelectedColor(data.colors[0]);
+        if (data.sizes?.length > 0) setSelectedSize(data.sizes[0]);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [id]);
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center font-black text-primary animate-pulse text-2xl font-heading">AasanBuy.</div>;
+  if (!product) return <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 py-20 px-4 text-center">
+    <span className="text-6xl mb-4">🔍</span>
+    <h2 className="text-2xl font-black text-dark">This Joy is Hidden...</h2>
+    <p className="text-gray-500">The product you are looking for doesn't exist or is recently removed.</p>
+    <a href="/" className="bg-primary text-white px-8 py-4 rounded-2xl font-black text-sm mt-4 shadow-xl">Back to Explorations</a>
   </div>;
-  if (!product) return null;
+
+  const discountPercent = product.mrp && product.price < product.mrp
+    ? Math.round(((product.mrp - product.price) / product.mrp) * 100) : 0;
+
+  const displayImages = selectedColor?.images?.length > 0 ? selectedColor.images : product.images || [];
+  const isOutOfStock = product.stock <= 0;
 
   return (
-    <div className="w-full bg-[#fcfcfc] font-sans">
-      <div className="max-w-[1250px] mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
-        
-        {/* Left Col: Images Stacked (FNP Style) */}
-        <div className="flex gap-4">
-           {/* Thumbnails */}
-           <div className="hidden md:flex flex-col gap-3 w-20">
-             {product.images.map((img, i) => (
-               <div key={i} 
-                 onClick={() => setActiveImg(i)}
-                 className={`aspect-square border cursor-pointer overflow-hidden transition-all ${i === activeImg ? 'border-secondary border-[2px] shadow-sm' : 'border-gray-200 hover:border-gray-300'}`}
-               >
-                 <img src={img} className="w-full h-full object-cover" />
-               </div>
-             ))}
-           </div>
-           {/* Main Image area */}
-           <div className="flex-grow bg-white aspect-square border border-gray-100 relative overflow-hidden rounded-lg shadow-sm">
-             <img src={product.images[activeImg]} className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" alt={product.name} />
-             {product.stock > 0 && product.stock < 10 && (
-               <div className="absolute top-4 left-4 bg-secondary text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">Only {product.stock} Left!</div>
-             )}
-           </div>
-        </div>
-
-        {/* Right Col: Specific Details panel */}
-        <div>
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] sticky top-36">
-            <h1 className="text-[24px] font-bold text-dark leading-snug tracking-tight mb-2">{product.name}</h1>
-            
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex items-center bg-orange-50 px-2 py-0.5 rounded text-secondary text-[12px] font-bold border border-orange-100">★ 4.8</div>
-              <span className="text-[13px] text-gray-500 font-medium">{product.category}</span>
-            </div>
-
-            <div className="flex items-baseline gap-3 mb-6">
-              <span className="text-[28px] font-black text-dark font-sans tracking-tight">QAR {product.price}</span>
-              <span className="text-[16px] text-gray-400 line-through">QAR {Math.round(product.price * 1.2)}</span>
-              <span className="text-[13px] font-bold text-secondary tracking-widest uppercase">(20% OFF)</span>
-            </div>
-
-            {/* Delivery Inputs Box */}
-            <div className="bg-[#fffbf4] border border-orange-100/50 rounded-2xl p-5 mb-6">
-               <h4 className="font-bold text-gray-800 text-[12px] uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-secondary"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
-                  Delivery Destination
-               </h4>
-               <div className="space-y-4">
-                 <div className="relative">
-                   <input 
-                      type="text" 
-                      placeholder="Enter Area / Pincode" 
-                      className="w-full border-b-2 border-gray-200 bg-transparent py-2 text-[14px] focus:outline-none focus:border-secondary transition-colors text-dark font-medium placeholder:text-gray-400" 
-                   />
-                 </div>
-                 <div className="relative">
-                   <input 
-                      type="date"
-                      className="w-full border-b-2 border-gray-200 bg-transparent py-2 text-[14px] focus:outline-none focus:border-secondary transition-colors text-gray-600 font-medium"
-                   />
-                 </div>
-               </div>
-               <p className="text-[11px] text-gray-400 mt-4 leading-normal italic">* Select a date to see available delivery slots.</p>
-            </div>
-
-            <div className="pt-2 mb-8">
-              <h4 className="font-bold text-gray-800 text-[12px] uppercase tracking-wider mb-2">Description</h4>
-              <p className="text-[14px] text-gray-600 leading-relaxed font-medium">
-                {product.description}
-              </p>
-            </div>
-
-            <div className="flex gap-4">
-              <button 
-                onClick={handleAddToCart} 
-                className="flex-1 bg-secondary text-white font-black py-4 rounded-xl hover:shadow-[0_10px_25px_rgba(245,156,26,0.3)] hover:-translate-y-0.5 transition-all uppercase text-[15px] tracking-widest"
-              >
-                ADD TO CART
-              </button>
-            </div>
-
-            <div className="mt-6 flex items-center justify-center gap-6 border-t border-gray-100 pt-6">
-               <div className="flex flex-col items-center gap-1">
-                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-secondary">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                  </div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Secure</span>
-               </div>
-               <div className="flex flex-col items-center gap-1">
-                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-secondary">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.129-1.125V11.25c0-.447-.25-.847-.643-1.04l-2.25-1.125a1.125 1.125 0 0 0-1.04 0l-2.25 1.125a1.125 1.125 0 0 0-.643 1.04v1.125m-9 0h1.125m1.125-1.125h1.125m1.125-1.125h1.125" /></svg>
-                  </div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Fast</span>
-               </div>
-            </div>
+    <div className="w-full bg-[#FAFAFB] min-h-screen pb-24">
+      
+      {/* breadcrumb */}
+      <div className="max-w-[1400px] mx-auto px-6 py-8">
+          <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+            <a href="/" className="hover:text-primary transition-colors">Home</a>
+            <span>/</span>
+            <a href="/products" className="hover:text-primary transition-colors">{product.categories?.[0] || 'Collections'}</a>
+            <span>/</span>
+            <span className="text-primary">{product.name}</span>
           </div>
+      </div>
+
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6">
+        <div className="bg-white rounded-[40px] shadow-premium border border-gray-100 flex flex-col lg:flex-row items-stretch overflow-hidden">
+           
+           {/* Left: Enhanced Images */}
+           <div className="w-full lg:w-[48%] xl:w-[45%] bg-[#F8F9FB] flex flex-col lg:border-r border-gray-100 p-4 md:p-8">
+              <div className="relative aspect-square bg-white rounded-[32px] shadow-soft border border-gray-100 overflow-hidden mb-6 flex items-center justify-center p-8 group">
+                  <img src={displayImages[activeImg]} className="max-w-full max-h-full object-contain transition-transform duration-700 group-hover:scale-110" alt={product.name} />
+                  {isOutOfStock && (
+                      <div className="absolute inset-0 bg-dark/40 backdrop-blur-[2px] flex items-center justify-center">
+                          <span className="bg-white text-dark font-black px-8 py-3 rounded-2xl tracking-[0.2em] shadow-2xl">SOLDOUT</span>
+                      </div>
+                  )}
+                  {discountPercent > 0 && (
+                      <div className="absolute top-6 left-6 bg-cta-buy text-white font-black px-4 py-2 rounded-xl text-[12px] shadow-xl">
+                          {discountPercent}% OFF
+                      </div>
+                  )}
+              </div>
+
+              <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                 {displayImages.map((img, i) => (
+                   <button 
+                    key={i} onClick={() => setActiveImg(i)}
+                    className={`shrink-0 w-24 h-24 rounded-2xl border-2 transition-all p-2 bg-white ${activeImg === i ? 'border-primary ring-4 ring-primary/5 scale-95 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                   >
+                     <img src={img} className="w-full h-full object-contain" />
+                   </button>
+                 ))}
+              </div>
+           </div>
+
+           {/* Right: Conversion Optimized Panel */}
+           <div className="flex-1 p-6 md:p-12">
+              <div className="flex items-center gap-3 mb-4">
+                  <span className="bg-primary/5 text-primary text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest">{product.brand || 'Exclusive'}</span>
+                  {product.stock <= 5 && !isOutOfStock && <span className="bg-amber-500 text-white text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest animate-pulse">🔥 High Demand</span>}
+              </div>
+
+              <h1 className="text-3xl md:text-5xl font-black font-heading text-dark leading-tight mb-6">
+                {product.name}
+              </h1>
+
+              <div className="flex items-center gap-6 pb-8 border-b border-gray-100 mb-8">
+                  <div>
+                    <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest block mb-1">Price</span>
+                    <div className="flex items-baseline gap-3">
+                        <span className="text-4xl font-black text-primary">₹{product.price.toLocaleString()}</span>
+                        {product.mrp > product.price && <span className="text-lg text-gray-300 line-through font-bold">₹{product.mrp.toLocaleString()}</span>}
+                    </div>
+                  </div>
+                  <div className="h-10 w-[1px] bg-gray-100" />
+                  <div>
+                    <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest block mb-1">Ratings</span>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xl font-black text-dark">{product.rating || 4.5}</span>
+                        <div className="flex text-secondary text-sm">★★★★★</div>
+                    </div>
+                  </div>
+              </div>
+
+              {/* Variants */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                 {product.colors?.length > 0 && (
+                   <div>
+                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-4">Selection: <span className="text-dark font-black">{selectedColor?.name}</span></label>
+                     <div className="flex gap-4">
+                        {product.colors.map((c, i) => (
+                          <button key={i} onClick={() => { setSelectedColor(c); setActiveImg(0); }}
+                            className={`w-10 h-10 rounded-2xl p-[3px] border-2 transition-all ${selectedColor?.name === c.name ? 'border-primary ring-4 ring-primary/10' : 'border-transparent hover:border-gray-200'}`}
+                          >
+                            <div className="w-full h-full rounded-xl overflow-hidden border border-gray-100" style={{ backgroundColor: c.hex }}></div>
+                          </button>
+                        ))}
+                     </div>
+                   </div>
+                 )}
+                 {product.sizes?.length > 0 && (
+                   <div>
+                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-4">Size Preference</label>
+                     <div className="flex gap-3">
+                        {product.sizes.map((s, i) => (
+                           <button key={i} onClick={() => setSelectedSize(s)}
+                            className={`min-w-[54px] h-11 border-2 font-black text-sm rounded-xl transition-all ${selectedSize === s ? 'border-primary bg-primary text-white shadow-xl' : 'border-gray-100 text-gray-400 hover:border-primary/20'}`}
+                           >
+                             {s}
+                           </button>
+                        ))}
+                     </div>
+                   </div>
+                 )}
+              </div>
+
+              {/* Action Block */}
+              <div className="space-y-4 mb-12">
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={() => { addToCart(product, 1, selectedColor, selectedSize); setShowModal(true); showToast(`${product.name} added to box!`, "success"); }}
+                      disabled={isOutOfStock}
+                      className="flex-1 h-16 bg-[#F8F9FB] text-primary border-2 border-primary/10 font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-white hover:border-primary transition-all disabled:opacity-50 btn-premium"
+                    >
+                      Add to Box
+                    </button>
+                    <button 
+                      onClick={() => { addToCart(product, 1, selectedColor, selectedSize); navigate('/checkout'); }}
+                      disabled={isOutOfStock}
+                      className="flex-[1.5] h-16 bg-cta-buy text-white font-black rounded-2xl shadow-xl shadow-cta-buy/20 flex items-center justify-center gap-2 transform active:scale-95 transition-all hover:-translate-y-1 hover:brightness-110 disabled:opacity-50 btn-premium"
+                    >
+                      Buy Now & Save
+                    </button>
+                  </div>
+                 <div className="flex items-center justify-center gap-4 text-[11px] font-bold text-gray-400">
+                    <span className="flex items-center gap-1.5"><svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path></svg> Secure Transaction</span>
+                    <span className="flex items-center gap-1.5"><svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path></svg> 7 Days Returns</span>
+                 </div>
+              </div>
+
+              {/* Insights */}
+              <div className="bg-[#F8F9FB] rounded-3xl p-8 border border-gray-50">
+                   <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Product Story</h4>
+                  <div className="prose prose-sm text-gray-500 leading-relaxed font-medium mb-8">
+                      <div dangerouslySetInnerHTML={{ __html: product.description }} />
+                  </div>
+                  {product.highlights?.length > 0 && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+                        {product.highlights.map((h, i) => (
+                           <div key={i} className="flex items-start gap-3">
+                              <span className="w-1.5 h-1.5 rounded-full bg-secondary mt-1.5 shrink-0" />
+                              <span className="text-[13px] font-bold text-dark/80">{h}</span>
+                           </div>
+                        ))}
+                      </div>
+                  )}
+              </div>
+
+              {/* Social Proof Toggle */}
+              <ReviewsSection productId={id} />
+           </div>
         </div>
       </div>
 
       <SuggestionModal 
         isOpen={showModal} 
         onClose={() => setShowModal(false)} 
-        onContinue={() => {
-          setShowModal(false);
-          onOpenCart();
-        }} 
+        onViewCart={() => { setShowModal(false); navigate('/checkout'); }} 
       />
     </div>
   );

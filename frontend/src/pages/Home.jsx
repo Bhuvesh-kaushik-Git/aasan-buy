@@ -1,63 +1,104 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ProductSkeleton, BannerSkeleton } from '../components/Skeleton';
 
-// New Vertical Product Card matching the screenshot
-const VerticalProductCard = ({ title, price, image, id, tagLabel, tagColor }) => {
-  const mockOldPrice = (price * 1.2).toFixed(2);
+const API_URL = import.meta.env.VITE_API_URL;
+
+// ── Components ──────────────────────────────────────────────────────────────
+
+const VerticalProductCard = ({ title, price, mrp, image, id, tagLabel, tagColor, rating = 4.5 }) => {
+  const displayMrp = mrp || (price * 1.15); // Better fallback logic
+  const discount = Math.round(((displayMrp - price) / displayMrp) * 100);
   
   return (
-    <a href={`/product/${id}`} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow flex flex-col w-[240px] snap-center shrink-0 border border-gray-200 overflow-hidden group">
-      <div className="w-full h-[240px] relative bg-gray-50 overflow-hidden">
-        <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+    <a 
+      href={`/product/${id}`} 
+      className="group flex flex-col w-[280px] snap-center shrink-0 bg-white rounded-3xl shadow-soft hover:shadow-premium transition-all duration-500 overflow-hidden border border-gray-100/50"
+    >
+      <div className="w-full h-[300px] relative bg-[#F8F9FB] overflow-hidden">
+        <img 
+          src={image} 
+          alt={title} 
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]" 
+        />
         {tagLabel && (
           <div 
-            className="absolute top-2 left-2 text-[10px] text-white font-bold px-2 py-0.5 rounded shadow-sm z-10"
-            style={{ backgroundColor: tagColor || '#ffbc00' }}
+            className="absolute top-4 left-4 text-[10px] text-white font-black px-3 py-1.5 rounded-xl shadow-lg z-10 uppercase tracking-widest backdrop-blur-md"
+            style={{ backgroundColor: `${tagColor || '#1A237E'}CC` }}
           >
             {tagLabel}
           </div>
         )}
+        <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+            <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl text-[12px] font-black text-primary shadow-2xl translate-y-6 group-hover:translate-y-0 transition-transform duration-700">
+                View Collection
+            </div>
+        </div>
       </div>
-      <div className="p-4 flex flex-col gap-1.5 flex-grow">
-        <div className="flex items-center gap-1.5 mt-1">
-          <span className="text-gray-400 line-through text-[10px] font-medium">INR {mockOldPrice}</span>
-          <span className="text-[13px] font-bold text-dark">INR {price.toFixed(2)}</span>
+      
+      <div className="p-6 flex flex-col gap-3 flex-grow">
+        <div className="flex items-center gap-2">
+            <span className="text-[18px] font-black text-primary tracking-tighter">₹{price.toLocaleString()}</span>
+            {discount > 0 && <span className="text-gray-300 line-through text-[13px] font-bold">₹{displayMrp.toLocaleString()}</span>}
+            {discount > 5 && <span className="text-[10px] font-black text-secondary-dark ml-auto bg-secondary/10 px-2 py-1 rounded-lg">{discount}% OFF</span>}
         </div>
-        <div className="text-[10px] text-gray-500 flex items-center gap-1">
-          4.75 <span className="text-[#ffbc00]">★</span> | 4.8 (4 reviews)
+        
+        <h3 className="text-[15px] font-black text-dark leading-[1.4] line-clamp-2 h-11 group-hover:text-primary transition-colors">
+          {title}
+        </h3>
+
+        <div className="flex items-center gap-2 mt-1 border-t border-gray-50 pt-4">
+          <div className="flex gap-0.5 text-secondary">
+            {[1,2,3,4,5].map(i => (
+              <span key={i} className={`text-[14px] ${i <= Math.round(rating) ? 'opacity-100' : 'opacity-20'}`}>★</span>
+            ))}
+          </div>
+          <span className="text-[11px] text-gray-400 font-bold tracking-wider">(1.2k)</span>
         </div>
-        <h3 className="text-[13px] font-medium text-gray-800 leading-snug line-clamp-2 mt-1">{title}</h3>
       </div>
     </a>
   );
 };
 
-// Occasion card exactly like the reference screenshot
+const ValueProp = ({ icon, title, desc }) => (
+    <div className="flex flex-col items-center text-center p-6 rounded-3xl bg-white border border-gray-100 shadow-soft">
+        <div className="w-14 h-14 rounded-2xl bg-primary/5 flex items-center justify-center text-primary mb-4 text-2xl">
+            {icon}
+        </div>
+        <h4 className="font-heading font-bold text-dark mb-1">{title}</h4>
+        <p className="text-[12px] text-gray-500 leading-relaxed font-medium">{desc}</p>
+    </div>
+);
+
 const OccasionCard = ({ label, imageUrl, redirectUrl }) => (
   <a
     href={redirectUrl || '#'}
-    className="flex flex-col items-center gap-2.5 snap-center shrink-0 group cursor-pointer"
-    style={{ width: '96px' }}
+    className="flex flex-col items-center gap-3 snap-center shrink-0 group cursor-pointer"
+    style={{ width: '100px' }}
   >
-    <div className="w-[84px] h-[84px] rounded-[20px] bg-[#f7f3ec] border border-[#ede8df] overflow-hidden shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:-translate-y-1">
+    <div className="w-[88px] h-[88px] rounded-3xl bg-white border border-gray-100 overflow-hidden shadow-soft group-hover:shadow-premium transition-all duration-500 group-hover:-translate-y-1.5">
       {imageUrl ? (
         <img
           src={imageUrl}
           alt={label}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
         />
       ) : (
-        <div className="w-full h-full flex items-center justify-center">
-          <div className="w-10 h-10 rounded-full bg-gray-200 opacity-40" />
+        <div className="w-full h-full flex items-center justify-center bg-primary/5">
+          <div className="w-8 h-8 rounded-full bg-primary/10 animate-pulse" />
         </div>
       )}
     </div>
-    <span className="text-[12px] font-medium text-gray-700 text-center leading-tight group-hover:text-secondary transition-colors">
+    <span className="text-[11px] font-black text-gray-500 uppercase tracking-widest text-center group-hover:text-primary transition-colors">
       {label}
     </span>
   </a>
 );
 
+// ── Main Component ─────────────────────────────────────────────────────────────
+
 const Home = ({ settings }) => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentBanner, setCurrentBanner] = useState(0);
@@ -66,9 +107,9 @@ const Home = ({ settings }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/products');
+        const res = await fetch(`${API_URL}/api/products?limit=20&page=1`);
         const data = await res.json();
-        setProducts(data);
+        setProducts(data.products || []);
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -78,162 +119,174 @@ const Home = ({ settings }) => {
     fetchData();
   }, []);
 
-  // Auto-slide
   useEffect(() => {
     if (settings?.heroBanners?.length > 1) {
       const timer = setInterval(() => {
         setCurrentBanner(prev => (prev + 1) % settings.heroBanners.length);
-      }, 4000);
+      }, 5000);
       return () => clearInterval(timer);
     }
   }, [settings?.heroBanners]);
 
   const heroBanners = settings?.heroBanners?.length > 0 ? settings.heroBanners : [{
-    title: "CURATED JOY. AASAN LIVING.",
-    subtitle: "Hand-picked essentials, delivered fast.",
-    imageUrl: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48",
-    linkUrl: "#"
+    title: "ELEVATE YOUR EVERYDAY.",
+    subtitle: "Curated Joy. Hand-picked essentials, delivered with love.",
+    imageUrl: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=1600&h=800&fit=crop",
+    linkUrl: "/products"
   }];
 
-  const occasionSections = settings?.occasionSections || [];
   const currentHero = heroBanners[currentBanner];
 
-  return (
-    <div className="w-full font-sans bg-background relative overflow-hidden">
-      {/* Subtle dot pattern */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-           style={{ backgroundImage: 'radial-gradient(#0e4c92 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+  if (loading) return (
+    <div className="w-full bg-background min-h-screen">
+      <BannerSkeleton />
+      <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 px-4 md:px-8 py-12">
+        <div className="h-40 bg-white rounded-3xl animate-pulse" />
+        <div className="h-40 bg-white rounded-3xl animate-pulse" />
+        <div className="h-40 bg-white rounded-3xl animate-pulse" />
+      </div>
+    </div>
+  );
 
-      {/* ── Hero Banner ── */}
-      <section className="relative w-full max-w-[1400px] mx-auto pt-4 pb-2 mt-12 px-4">
-        <div className="relative overflow-hidden rounded-2xl aspect-[21/9] md:aspect-[3/1] bg-gray-100 group">
-          <a href={currentHero.linkUrl} className="block w-full h-full relative">
-            <img
+  return (
+    <div className="w-full bg-[#FAFAFB] min-h-screen">
+      
+      {/* ── Hero Luxe ── */}
+      <section className="relative w-full max-w-[1400px] mx-auto pt-6 px-4 md:px-8">
+        <div className="relative overflow-hidden rounded-[40px] bg-dark group shadow-premium aspect-[21/10] md:aspect-[21/8]">
+          <div className="absolute inset-0 z-0">
+             <img
               key={currentHero.imageUrl}
               src={currentHero.imageUrl}
-              alt="Promotion Banner"
-              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
+              alt="Promo"
+              className="w-full h-full object-cover transition-transform duration-[3000ms] scale-100 group-hover:scale-105 opacity-50"
             />
-            <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
-          </a>
+          </div>
 
-          <button
-            onClick={() => setCurrentBanner(prev => (prev - 1 + heroBanners.length) % heroBanners.length)}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-md shadow-lg flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
-          </button>
-          <button
-            onClick={() => setCurrentBanner(prev => (prev + 1) % heroBanners.length)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-md shadow-lg flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
-          </button>
-
-          {heroBanners.length > 1 && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-              {heroBanners.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={e => { e.preventDefault(); setCurrentBanner(i); }}
-                  className={`h-2.5 rounded-full transition-all duration-300 shadow-sm ${i === currentBanner ? 'bg-secondary w-8' : 'bg-white/60 w-2.5 hover:bg-white'}`}
-                />
-              ))}
+          <div className="relative z-10 w-full h-full flex items-center px-8 md:px-24 text-white">
+            <div className="max-w-2xl animate-fade-in-up">
+                <span className="inline-block px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md text-white text-[10px] font-black tracking-[0.3em] mb-6 shadow-xl border border-white/20">AASANBUY EXCLUSIVE</span>
+                <h1 className="text-5xl md:text-7xl font-black font-heading leading-[1.1] mb-6 drop-shadow-2xl text-balance">
+                    {currentHero.title}
+                </h1>
+                <p className="text-sm md:text-xl text-white/70 font-medium mb-10 max-w-md leading-relaxed">
+                    {currentHero.subtitle}
+                </p>
+                <div className="flex items-center gap-6">
+                  <a href={currentHero.linkUrl} className="bg-white text-primary px-10 py-5 rounded-2xl font-black text-sm hover:bg-secondary hover:text-white transition-all transform hover:-translate-y-1 shadow-2xl btn-premium">
+                      Explore Collection
+                  </a>
+                  <div className="hidden md:flex items-center gap-4 px-6 py-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10">
+                      <div className="flex -space-x-3">
+                        {[1,2,3].map(i => <div key={i} className="w-9 h-9 rounded-full border-2 border-primary bg-gray-600 shadow-lg" />)}
+                      </div>
+                      <span className="text-[11px] font-black uppercase tracking-widest text-white/60">Loved by 1.2k+</span>
+                  </div>
+                </div>
             </div>
-          )}
-        </div>
+          </div>
 
-        <div className="w-full mt-4">
-          <p className="text-[9px] text-gray-400 italic text-center opacity-70">
-            *Note: Final checkout will be completed on our trusted e-commerce partner's platform.
-          </p>
+          {/* Controls */}
+          <div className="absolute bottom-10 right-12 hidden md:flex gap-3 z-20">
+              <button 
+                onClick={() => setCurrentBanner(prev => (prev - 1 + heroBanners.length) % heroBanners.length)}
+                className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white hover:text-primary transition-all"
+              >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
+              </button>
+              <button 
+                onClick={() => setCurrentBanner(prev => (prev + 1) % heroBanners.length)}
+                className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white hover:text-primary transition-all"
+              >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+              </button>
+          </div>
         </div>
       </section>
 
-      {/* ── Occasion Sections (one strip per section) ── */}
-      {occasionSections.map((sec, sIdx) => (
-        sec.occasions?.length > 0 && (
-          <section key={sIdx} className="relative z-10 w-full max-w-[1400px] mx-auto px-4 md:px-12 py-6">
-            {sec.sectionTitle && (
-              <h2 className="text-[18px] md:text-[20px] font-bold text-dark mb-5 font-serif tracking-tight">
-                {sec.sectionTitle}
-              </h2>
-            )}
-            <div className="flex overflow-x-auto gap-4 pb-3 snap-x no-scrollbar">
-              {sec.occasions.map((occ, oIdx) => (
-                <OccasionCard
-                  key={oIdx}
-                  label={occ.label}
-                  imageUrl={occ.imageUrl}
-                  redirectUrl={occ.redirectUrl}
-                />
+      {/* ── Value Propositions ── */}
+      <section className="w-full max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 px-4 md:px-8 py-12">
+        <ValueProp icon="💎" title="Premium Curation" desc="Hand-picked products that meet the highest standards of quality." />
+        <ValueProp icon="⚡" title="Express Delivery" desc="Dispatched within 24 hours with real-time tracking to your door." />
+        <ValueProp icon="🛡️" title="Secure Gifting" desc="Secure packaging and payment processing for total peace of mind." />
+      </section>
+
+      {/* Main Content Areas */}
+      <div className="max-w-[1400px] mx-auto px-6 space-y-32 py-24">
+        
+        {/* Occasion Sections */}
+        {settings?.occasionSections?.map((section, sIdx) => (
+          <section key={sIdx} className="space-y-12 animate-fade-in-up">
+            <div className="flex flex-col items-center text-center space-y-4">
+               <h2 className="text-4xl md:text-5xl font-black text-dark leading-tight tracking-tighter">
+                 {section.sectionTitle}
+               </h2>
+               <div className="w-20 h-1.5 bg-secondary rounded-full" />
+            </div>
+            
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-12">
+              {section.occasions?.map((occ, oIdx) => (
+                <div key={oIdx} onClick={() => navigate(occ.redirectUrl)} className="group relative aspect-[4/5] overflow-hidden rounded-[40px] cursor-pointer shadow-premium hover:shadow-2xl transition-all duration-700">
+                  <img src={occ.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={occ.label} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark/90 via-dark/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute bottom-8 left-8 right-8">
+                     <h3 className="text-white text-2xl font-black font-heading mb-2 transform group-hover:-translate-y-2 transition-transform duration-500">{occ.label}</h3>
+                     <span className="inline-flex items-center gap-2 text-[10px] font-black text-secondary uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0">
+                        Explore Collection <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+                     </span>
+                  </div>
+                </div>
               ))}
             </div>
           </section>
-        )
-      ))}
+        ))}
 
-      {/* ── Products Carousel (Tabs) ── */}
-      {settings?.homeProductTabs?.length > 0 && (
-        <section className="relative z-10 w-full max-w-[1400px] mx-auto px-4 md:px-12 py-6 pb-16">
-          <div className="flex flex-col mb-6">
-             <div className="flex gap-6 overflow-x-auto no-scrollbar border-b border-gray-200 pb-2">
-               {settings.homeProductTabs.map((tab, idx) => (
-                 <button
-                   key={idx}
-                   onClick={() => setActiveProductTab(idx)}
-                   className={`text-[16px] md:text-[18px] font-bold whitespace-nowrap pb-2 ${activeProductTab === idx ? 'text-dark border-b-2 border-dark' : 'text-gray-400 hover:text-gray-600'}`}
-                 >
-                   {tab.tabTitle}
-                 </button>
-               ))}
-             </div>
-          </div>
-          <div className="flex overflow-x-auto gap-4 pb-6 snap-x no-scrollbar pt-2">
-            {settings.homeProductTabs[activeProductTab]?.products?.map((item, index) => {
-              const p = item.product;
-              if (!p) return null;
-              return (
-                <VerticalProductCard
-                  key={item._id || index}
-                  id={p._id}
-                  title={p.name}
-                  price={p.price || 0}
-                  image={p.images?.[0]}
-                  tagLabel={item.tagLabel}
-                  tagColor={item.tagColor}
-                />
-              );
-            })}
-            {settings.homeProductTabs[activeProductTab]?.products?.length === 0 && (
-              <div className="text-gray-400 font-medium py-10 w-full text-center border-2 border-dashed border-gray-200 rounded-xl">
-                No products found in this tab.
-              </div>
-            )}
-          </div>
-          
-          {/* View All Button */}
-          {settings.homeProductTabs[activeProductTab]?.products?.length > 0 && (
-            <div className="flex justify-center mt-2">
-               <a href="/products" className="bg-[#788a63] hover:bg-[#687a53] text-white text-[13px] font-bold px-8 py-2.5 rounded-full transition-colors shadow-sm">
-                  View all
-               </a>
+        {/* Tabbed Product Showcase */}
+        {settings?.homeProductTabs?.length > 0 && (
+          <section className="space-y-12 animate-fade-in-up">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-gray-100 pb-8">
+               <div className="space-y-2">
+                 <span className="text-[12px] font-black text-secondary uppercase tracking-[0.4em]">Curated Picks</span>
+                 <h2 className="text-4xl font-black text-dark tracking-tighter">Featured Treasures</h2>
+               </div>
+               <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 md:pb-0">
+                 {settings.homeProductTabs.map((tab, idx) => (
+                   <button 
+                     key={idx}
+                     onClick={() => setActiveProductTab(idx)}
+                     className={`px-8 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap
+                     ${activeProductTab === idx ? 'bg-primary text-white shadow-xl shadow-primary/20 -translate-y-1' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                   >
+                     {tab.tabTitle}
+                   </button>
+                 ))}
+               </div>
             </div>
-          )}
-        </section>
-      )}
 
-      {/* Fallback old product carousel rendering if no tabs configured yet to prevent breaking */}
-      {(!settings?.homeProductTabs || settings.homeProductTabs.length === 0) && (
-          <section className="relative z-10 w-full max-w-[1400px] mx-auto px-4 md:px-12 py-6 pb-16">
-            <h2 className="text-[18px] md:text-[20px] font-bold text-dark font-serif tracking-tight mb-5">
-               All Products
-            </h2>
-            <div className="text-gray-400 font-medium py-10 w-full text-center border-2 border-dashed border-gray-200 rounded-xl">
-              No product tabs created. Please add them in Admin Panel.
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-10">
+               {loading ? (
+                 Array(4).fill(0).map((_, i) => <ProductSkeleton key={i} />)
+               ) : (
+                 settings.homeProductTabs[activeProductTab]?.products?.map((item, pIdx) => (
+                   <div key={pIdx} className="animate-fade-in" style={{ animationDelay: `${pIdx * 100}ms` }}>
+                    <VerticalProductCard 
+                      id={item.product?._id}
+                      title={item.product?.name}
+                      price={item.product?.price || 0}
+                      mrp={item.product?.mrp}
+                      image={item.product?.images?.[0]}
+                      tagLabel={item.tagLabel}
+                      tagColor={item.tagColor}
+                      rating={item.product?.rating}
+                    />
+                   </div>
+                 ))
+               )}
             </div>
           </section>
-      )}
+        )}
+      </div>
+
     </div>
   );
 };

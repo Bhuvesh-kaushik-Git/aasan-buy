@@ -7,16 +7,27 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#0e4c92', // AasanBuy Dark Blue
-        secondary: '#f59c1a', // AasanBuy Bright Orange
-        background: '#fffbf4', // Warm Cream Background
-        accent: '#f3f4f6', 
-        dark: '#1f2937',
-        light: '#ffffff'
+        primary: {
+          DEFAULT: '#1A237E', // Deep Indigo
+          light: '#303F9F',
+          dark: '#121858',
+        },
+        secondary: {
+          DEFAULT: '#FFB300', // Luxe Gold
+          light: '#FFCA28',
+          dark: '#F57C00',
+        },
+        background: '#F4F7F9', // Silk Grey
+        dark: '#121212',
+        light: '#FFFFFF',
       },
       fontFamily: {
+        heading: ['Outfit', 'sans-serif'],
         sans: ['Inter', 'sans-serif'],
-        serif: ['Playfair Display', 'serif'],
+      },
+      boxShadow: {
+        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.04)',
+        'premium': '0 20px 50px -12px rgba(26, 35, 126, 0.08)',
       }
     },
   },

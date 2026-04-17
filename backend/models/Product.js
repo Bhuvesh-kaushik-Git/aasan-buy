@@ -9,6 +9,17 @@ const productSchema = new mongoose.Schema({
   stock: { type: Number, default: 0 },
   sku: { type: String, default: '' },
   sold: { type: Number, default: 0 },
+  mrp: { type: Number, default: 0 },
+  brand: { type: String, default: '' },
+  colors: [{ 
+    name: { type: String },
+    hex: { type: String },
+    images: [{ type: String }]
+  }],
+  sizes: [{ type: String }],
+  highlights: [{ type: String }],
+  rating: { type: Number, default: 0 },
+  reviewCount: { type: Number, default: 0 },
 }, {
   timestamps: true,
 });

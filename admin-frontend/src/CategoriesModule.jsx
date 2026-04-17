@@ -153,58 +153,62 @@ export default function CategoriesModule() {
 
   if (editingCategory) {
     return (
-      <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100 animate-fade-in-up">
-        <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-           <h2 className="text-2xl font-bold font-serif text-dark">{editingCategory._id ? `Edit Category: ${editingCategory.name}` : 'Create New Category'}</h2>
-           <button onClick={() => setEditingCategory(null)} className="text-gray-400 hover:text-gray-600 font-bold text-sm bg-gray-50 px-4 py-2 rounded-lg">✕ Return to list</button>
+      <div className="max-w-4xl mx-auto bg-white p-10 rounded-[40px] shadow-premium border border-black/5 animate-fade-in-up">
+        <div className="flex justify-between items-center mb-10 border-b border-gray-50 pb-8">
+           <div className="space-y-1">
+              <span className="text-[10px] font-black text-secondary uppercase tracking-[0.4em]">Resource Editor</span>
+              <h2 className="text-3xl font-black font-heading text-dark tracking-tighter">{editingCategory._id ? `Edit: ${editingCategory.name}` : 'New Category'}</h2>
+           </div>
+           <button onClick={() => setEditingCategory(null)} className="text-gray-400 hover:text-dark font-black text-[11px] uppercase tracking-widest bg-gray-50 px-6 py-3 rounded-2xl transition-all">✕ Cancel</button>
         </div>
         
-        <form onSubmit={handleSaveCategory} className="space-y-6">
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-2">Category Name</label>
-                <input required type="text" value={editingCategory.name || ''} onChange={e => setEditingCategory(p => ({...p, name: e.target.value}))} className="w-full border border-gray-200 rounded-lg px-4 py-2 bg-gray-50 focus:bg-white focus:outline-none focus:border-secondary transition-colors" placeholder="e.g. Occasion Cakes" />
+        <form onSubmit={handleSaveCategory} className="space-y-8">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest block ml-1">Identity</label>
+                <input required type="text" value={editingCategory.name || ''} onChange={e => setEditingCategory(p => ({...p, name: e.target.value}))} className="w-full border-0 rounded-2xl px-6 py-4 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-secondary/10 focus:outline-none transition-all font-black text-sm" placeholder="e.g. Wedding Luxe" />
               </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-2">Image URL</label>
-                <input type="text" value={editingCategory.image || ''} onChange={e => setEditingCategory(p => ({...p, image: e.target.value}))} className="w-full border border-gray-200 rounded-lg px-4 py-2 bg-gray-50 focus:bg-white focus:outline-none focus:border-secondary transition-colors" placeholder="https://..." />
+              <div className="space-y-3">
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest block ml-1">Visual Asset (URL)</label>
+                <input type="text" value={editingCategory.image || ''} onChange={e => setEditingCategory(p => ({...p, image: e.target.value}))} className="w-full border-0 rounded-2xl px-6 py-4 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-secondary/10 focus:outline-none transition-all font-black text-sm" placeholder="https://..." />
               </div>
            </div>
            
-           <div className="flex justify-start">
-              <button disabled={loading} type="submit" className="bg-primary hover:bg-opacity-90 text-white font-bold px-8 py-2.5 rounded-lg shadow-md transition-all active:scale-95 disabled:opacity-50 text-sm">
-                 {loading ? 'Saving...' : (editingCategory._id ? 'Update Category Info' : 'Create Category & Proceed')}
+           <div className="flex justify-end pt-4">
+              <button disabled={loading} type="submit" className="bg-primary hover:brightness-110 text-white font-black px-12 py-4 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:opacity-50 text-xs uppercase tracking-[0.2em]">
+                 {loading ? 'Processing...' : (editingCategory._id ? 'Update Category' : 'Create & Assign Products')}
               </button>
            </div>
         </form>
 
         {editingCategory._id && (
-           <CategoryProductAssigner 
-              categoryName={editingCategory.name} 
-              categoryId={editingCategory._id} 
-              onSaveCategoryProducts={() => alert("Product assignments wrapped!")}
-           />
+           <div className="mt-12 pt-12 border-t border-gray-50">
+             <CategoryProductAssigner 
+                categoryName={editingCategory.name} 
+                categoryId={editingCategory._id} 
+                onSaveCategoryProducts={() => alert("Product synchronization complete! ✨")}
+             />
+           </div>
         )}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full animate-fade-in-up max-w-[1000px] mx-auto">
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-wrap gap-4 items-center justify-between relative overflow-hidden">
-         {/* Decorative blob */}
-         <div className="absolute -right-10 -top-10 w-32 h-32 bg-secondary opacity-10 rounded-full blur-2xl pointer-events-none"></div>
+    <div className="flex flex-col h-full animate-fade-in-up max-w-[1200px] mx-auto pb-20">
+      <div className="bg-white p-10 rounded-[40px] shadow-soft border border-black/5 mb-8 flex flex-wrap gap-8 items-center justify-between relative overflow-hidden">
+         <div className="absolute -right-10 -top-10 w-48 h-48 bg-secondary opacity-5 rounded-full blur-3xl pointer-events-none"></div>
          <div>
-            <h2 className="text-2xl font-bold font-serif text-dark shrink-0 mb-1">Categories</h2>
-            <p className="text-sm text-gray-500">Manage store categories and manually bind products.</p>
+            <span className="text-[11px] font-black text-secondary uppercase tracking-[0.4em] mb-1 block">Inventory Taxonomy</span>
+            <h2 className="text-4xl font-black font-heading text-dark tracking-tighter shrink-0">Global Categories</h2>
          </div>
-         <button onClick={() => setEditingCategory({})} className="bg-primary text-white hover:bg-opacity-90 font-bold text-sm px-6 py-3 rounded-xl transition-all shadow-lg active:scale-95 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+         <button onClick={() => setEditingCategory({})} className="bg-primary text-white font-black text-sm px-10 py-5 rounded-2xl transition-all shadow-xl shadow-primary/20 hover:-translate-y-1 active:scale-95 flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
             Add New Category
          </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {categories.map(cat => (
           <div key={cat._id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all group overflow-hidden flex flex-col">
              <div className="h-32 bg-gray-50 relative border-b border-gray-100">
