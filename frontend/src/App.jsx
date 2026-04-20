@@ -10,6 +10,7 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Contact from './pages/Contact';
 import ThankYou from './pages/ThankYou';
+import Collection from './pages/Collection';
 import Footer from './components/Footer';
 import { useCart } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
@@ -185,6 +186,7 @@ function AppContent() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/contact-us" element={<Contact />} />
           <Route path="/thank-you" element={<ThankYou />} />
+          <Route path="/collection/:id" element={<Collection />} />
         </Routes>
       </main>
       <Footer />

@@ -23,7 +23,8 @@ const siteSettingsSchema = new mongoose.Schema({
         {
           label: { type: String, default: '' },
           imageUrl: { type: String, default: '' },
-          redirectUrl: { type: String, default: '#' }
+          redirectUrl: { type: String, default: '#' },
+          products: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
         }
       ]
     }

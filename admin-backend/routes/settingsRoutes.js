@@ -39,6 +39,12 @@ router.put('/', async (req, res) => {
       settings.occasionSections = req.body.occasionSections !== undefined ? req.body.occasionSections : settings.occasionSections;
       settings.homeProductTabs = req.body.homeProductTabs !== undefined ? req.body.homeProductTabs : settings.homeProductTabs;
       
+      // Force Mongoose to recognize changes in nested arrays
+      settings.markModified('occasionSections');
+      settings.markModified('homeProductTabs');
+      settings.markModified('navMenu');
+      settings.markModified('heroBanners');
+
       const updatedSettings = await settings.save();
       res.json(updatedSettings);
     } else {

@@ -61,6 +61,7 @@ function App() {
   });
   const [loading, setLoading] = useState(false);
   const [allProducts, setAllProducts] = useState([]);
+  const [editingNavIdx, setEditingNavIdx] = useState(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/products?limit=200&page=1`)
@@ -124,7 +125,7 @@ function App() {
   };
   const handleAddOccasion = (sIdx) => {
     const updated = [...formData.occasionSections];
-    updated[sIdx].occasions = [...(updated[sIdx].occasions || []), { label: '', imageUrl: '', redirectUrl: '' }];
+    updated[sIdx].occasions = [...(updated[sIdx].occasions || []), { label: '', imageUrl: '', redirectUrl: '', products: [] }];
     setFormData(prev => ({ ...prev, occasionSections: updated }));
   };
   const handleRemoveOccasion = (sIdx, oIdx) => {
@@ -209,9 +210,9 @@ function App() {
       updated[tIdx].products.splice(existsIndex, 1);
     } else {
       updated[tIdx].products.push({
-        product: productObj._id,
-        tagLabel: '',
-        tagColor: '#ffbc00'
+          product: productObj._id,
+          tagLabel: '',
+          tagColor: '#ffbc00'
       });
     }
     setFormData(prev => ({ ...prev, homeProductTabs: updated }));
@@ -222,21 +223,51 @@ function App() {
     setFormData(prev => ({ ...prev, homeProductTabs: updated }));
   };
 
+  // ── Occasion Product Handlers ──
+  const handleToggleProductInOccasion = (sIdx, oIdx, productObj) => {
+    const updated = [...formData.occasionSections];
+    if (!updated[sIdx].occasions[oIdx].products) {
+      updated[sIdx].occasions[oIdx].products = [];
+    }
+    const products = updated[sIdx].occasions[oIdx].products;
+    const existsIndex = products.findIndex(p => p === productObj._id || p?._id === productObj._id);
+    
+    if (existsIndex > -1) {
+      products.splice(existsIndex, 1);
+    } else {
+      products.push(productObj._id);
+    }
+    setFormData(prev => ({ ...prev, occasionSections: updated }));
+  };
+
   // ── Save ──
   const handleSaveCMS = () => {
     setLoading(true);
+    const body = {
+      heroBanners: formData.heroBanners,
+      navMenu: formData.navMenu,
+      occasionSections: formData.occasionSections,
+      homeProductTabs: formData.homeProductTabs
+    };
+    console.log('Publishing Storefront Settings:', body);
+
     fetch(`${API_URL}/api/settings`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        heroBanners: formData.heroBanners,
-        navMenu: formData.navMenu,
-        occasionSections: formData.occasionSections,
-        homeProductTabs: formData.homeProductTabs
-      })
+      body: JSON.stringify(body)
     })
     .then(res => res.json())
-    .then(() => alert("Settings saved and published!"))
+    .then((data) => {
+      if (data) {
+        setFormData({
+            heroBanners: data.heroBanners || [],
+            navMenu: data.navMenu || [],
+            occasionSections: data.occasionSections || [],
+            homeProductTabs: data.homeProductTabs || []
+        });
+      }
+      alert("Settings saved and published!");
+    })
     .catch(err => console.error(err))
     .finally(() => setLoading(false));
   };
@@ -348,12 +379,55 @@ function App() {
                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     </button>
                   </div>
-                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                  <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                     {formData.navMenu.map((menu, mIdx) => (
-                      <div key={mIdx} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
-                         <input type="text" value={menu.label} onChange={e => handleMenuChange(mIdx, 'label', e.target.value)} className="bg-white px-3 py-1.5 rounded-lg text-xs font-black border-0 w-[150px]" />
-                         <span className="text-[10px] text-gray-400 font-bold">{(menu.sections || []).length} Columns</span>
-                         <button onClick={() => handleRemoveMenu(mIdx)} className="text-red-400 hover:text-red-600">✕</button>
+                      <div key={mIdx} className="space-y-4">
+                        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
+                           <div className="flex items-center gap-4">
+                              <input type="text" value={menu.label} onChange={e => handleMenuChange(mIdx, 'label', e.target.value)} className="bg-white px-3 py-1.5 rounded-lg text-xs font-black border-0 w-[150px]" />
+                              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{(menu.sections || []).length} Columns</span>
+                           </div>
+                           <div className="flex items-center gap-2">
+                              <button onClick={() => setEditingNavIdx(editingNavIdx === mIdx ? null : mIdx)} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${editingNavIdx === mIdx ? 'bg-primary text-white' : 'bg-white text-primary border border-primary/20'}`}>
+                                 {editingNavIdx === mIdx ? 'Close' : 'Manage Submenu'}
+                              </button>
+                              <button onClick={() => handleRemoveMenu(mIdx)} className="text-red-400 hover:text-red-600 px-2">✕</button>
+                           </div>
+                        </div>
+
+                        {editingNavIdx === mIdx && (
+                          <div className="ml-8 p-6 bg-white rounded-[24px] border-2 border-primary/5 space-y-6 animate-fade-in">
+                             <div className="flex items-center justify-between">
+                                <h4 className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">{menu.label} Columns</h4>
+                                <button onClick={() => handleAddSection(mIdx)} className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider border border-emerald-100">+ Add Column</button>
+                             </div>
+
+                             <div className="grid grid-cols-1 gap-4">
+                                {(menu.sections || []).map((sec, sIdx) => (
+                                  <div key={sIdx} className="p-5 bg-gray-50/50 rounded-2xl border border-gray-100 space-y-4">
+                                     <div className="flex items-center gap-4">
+                                        <input type="text" value={sec.title} onChange={e => handleSectionTitleChange(mIdx, sIdx, e.target.value)} className="flex-1 bg-white px-4 py-2 rounded-xl text-xs font-black border-0" placeholder="Column Title (e.g. Occasions)" />
+                                        <button onClick={() => handleRemoveSection(mIdx, sIdx)} className="text-red-300 hover:text-red-500">✕</button>
+                                     </div>
+
+                                     <div className="pl-4 space-y-3">
+                                        <div className="flex items-center justify-between mb-2">
+                                           <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest line-through-- hidden">Links</span>
+                                           <button onClick={() => handleAddLink(mIdx, sIdx)} className="text-primary text-[9px] font-black uppercase tracking-widest hover:underline">+ Add Link</button>
+                                        </div>
+                                        {(sec.links || []).map((link, lIdx) => (
+                                          <div key={lIdx} className="flex items-center gap-3 bg-white p-2 rounded-xl border border-gray-50 shadow-sm">
+                                             <input type="text" value={link.label} onChange={e => handleLinkChange(mIdx, sIdx, lIdx, 'label', e.target.value)} className="w-1/3 bg-transparent text-[11px] font-bold border-0" placeholder="Label" />
+                                             <input type="text" value={link.url} onChange={e => handleLinkChange(mIdx, sIdx, lIdx, 'url', e.target.value)} className="flex-1 bg-transparent text-[10px] text-gray-400 border-0" placeholder="/url" />
+                                             <button onClick={() => handleRemoveLink(mIdx, sIdx, lIdx)} className="text-gray-300 hover:text-red-400">✕</button>
+                                          </div>
+                                        ))}
+                                     </div>
+                                  </div>
+                                ))}
+                             </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -364,8 +438,8 @@ function App() {
               <div className="bg-white rounded-[32px] shadow-soft border border-black/5 p-10">
                  <div className="flex justify-between items-center mb-10">
                     <div>
-                      <h3 className="font-heading font-black text-2xl text-dark">Occasion Strategy</h3>
-                      <p className="text-sm text-gray-400 font-medium">Manage the horizontal collection strips on the homepage.</p>
+                       <h3 className="font-heading font-black text-2xl text-dark">Occasion Strategy</h3>
+                       <p className="text-sm text-gray-400 font-medium">Manage the horizontal collection strips on the homepage.</p>
                     </div>
                     <button onClick={handleAddOccasionSection} className="bg-secondary/10 text-secondary font-black text-xs px-6 py-2.5 rounded-xl hover:bg-secondary hover:text-white transition-all">+ New Strip</button>
                  </div>
@@ -379,14 +453,25 @@ function App() {
                             <button onClick={() => handleRemoveOccasionSection(sIdx)} className="text-red-300 hover:text-red-600">✕</button>
                          </div>
                          <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-                            {(section.occasions || []).map((occ, oIdx) => (
-                               <div key={oIdx} className="w-[180px] shrink-0 bg-white p-3 rounded-2xl shadow-sm border border-gray-50 relative group">
-                                  <button onClick={() => handleRemoveOccasion(sIdx, oIdx)} className="absolute -top-1 -right-1 bg-red-500 text-white w-5 h-5 rounded-full text-[9px] opacity-0 group-hover:opacity-100">✕</button>
-                                  <img src={occ.imageUrl} className="w-full h-24 object-cover rounded-xl mb-3" />
-                                  <input type="text" value={occ.label} onChange={e => handleOccasionChange(sIdx, oIdx, 'label', e.target.value)} className="w-full text-[11px] font-black border-0 mb-1" placeholder="Label" />
-                                  <input type="text" value={occ.imageUrl} onChange={e => handleOccasionChange(sIdx, oIdx, 'imageUrl', e.target.value)} className="w-full text-[9px] text-gray-400 border-0" placeholder="Image URL" />
-                               </div>
-                            ))}
+                             {(section.occasions || []).map((occ, oIdx) => (
+                                <div key={oIdx} className="w-[300px] shrink-0 bg-white p-4 rounded-[32px] shadow-sm border border-gray-100 relative group flex flex-col gap-4">
+                                   <button onClick={() => handleRemoveOccasion(sIdx, oIdx)} className="absolute -top-1 -right-1 bg-red-500 text-white w-6 h-6 rounded-full text-[10px] opacity-0 group-hover:opacity-100 shadow-lg z-10">✕</button>
+                                   <img src={occ.imageUrl} className="w-full h-32 object-cover rounded-2xl" />
+                                   <div className="space-y-2">
+                                      <input type="text" value={occ.label} onChange={e => handleOccasionChange(sIdx, oIdx, 'label', e.target.value)} className="w-full text-sm font-black border-0 bg-gray-50 rounded-xl px-3 py-2" placeholder="Label (e.g. Birthdays)" />
+                                      <input type="text" value={occ.imageUrl} onChange={e => handleOccasionChange(sIdx, oIdx, 'imageUrl', e.target.value)} className="w-full text-[10px] text-gray-400 border-0 bg-gray-50 rounded-xl px-3 py-1.5" placeholder="Image URL" />
+                                   </div>
+                                   
+                                   <div className="border-t border-gray-50 pt-4">
+                                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Curation ({(occ.products || []).length})</p>
+                                      <ProductSearchSelector 
+                                         allProducts={allProducts}
+                                         selectedIds={occ.products || []}
+                                         onToggle={(product) => handleToggleProductInOccasion(sIdx, oIdx, product)}
+                                      />
+                                   </div>
+                                </div>
+                             ))}
                          </div>
                       </div>
                     ))}

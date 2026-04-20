@@ -226,7 +226,7 @@ const Home = ({ settings }) => {
             
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-12">
               {section.occasions?.map((occ, oIdx) => (
-                <div key={oIdx} onClick={() => navigate(occ.redirectUrl)} className="group relative aspect-[4/5] overflow-hidden rounded-[40px] cursor-pointer shadow-premium hover:shadow-2xl transition-all duration-700">
+                <div key={oIdx} onClick={() => navigate(`/collection/${occ._id}`)} className="group relative aspect-[4/5] overflow-hidden rounded-[40px] cursor-pointer shadow-premium hover:shadow-2xl transition-all duration-700">
                   <img src={occ.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={occ.label} />
                   <div className="absolute inset-0 bg-gradient-to-t from-dark/90 via-dark/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
                   <div className="absolute bottom-8 left-8 right-8">
