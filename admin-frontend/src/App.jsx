@@ -25,7 +25,12 @@ const ProductSearchSelector = ({ allProducts, selectedIds, onToggle }) => {
        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
           {displayProducts.map(p => (
             <label key={p._id} className="flex items-center gap-3 p-2 border border-gray-100 bg-white rounded-xl cursor-pointer hover:bg-secondary/5 transition-colors">
-              <input type="checkbox" checked={selectedIds.includes(p._id)} onChange={() => onToggle(p)} className="w-4 h-4 text-secondary accent-secondary" />
+              <input 
+                type="checkbox" 
+                checked={selectedIds.some(sid => (sid?._id || sid)?.toString() === p._id?.toString())} 
+                onChange={() => onToggle(p)} 
+                className="w-4 h-4 text-secondary accent-secondary" 
+              />
               <img src={p.images?.[0]} alt="" className="w-8 h-8 rounded shrink-0 object-cover" />
               <span className="text-xs font-medium truncate flex-1">{p.name}</span>
             </label>
@@ -230,7 +235,7 @@ function App() {
       updated[sIdx].occasions[oIdx].products = [];
     }
     const products = updated[sIdx].occasions[oIdx].products;
-    const existsIndex = products.findIndex(p => p === productObj._id || p?._id === productObj._id);
+    const existsIndex = products.findIndex(p => (p?._id || p)?.toString() === productObj._id?.toString());
     
     if (existsIndex > -1) {
       products.splice(existsIndex, 1);
@@ -246,7 +251,14 @@ function App() {
     const body = {
       heroBanners: formData.heroBanners,
       navMenu: formData.navMenu,
-      occasionSections: formData.occasionSections,
+      occasionSections: formData.occasionSections.map(section => ({
+        ...section,
+        sectionTitle: (section.sectionTitle || "").trim(),
+        occasions: (section.occasions || []).map(occ => ({
+            ...occ,
+            label: (occ.label || "").trim()
+        }))
+      })),
       homeProductTabs: formData.homeProductTabs
     };
     console.log('Publishing Storefront Settings:', body);

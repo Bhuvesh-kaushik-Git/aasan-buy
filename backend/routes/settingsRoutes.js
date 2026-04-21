@@ -10,7 +10,11 @@ router.get('/', async (req, res) => {
     const settings = await SiteSettings.findOne({})
       .populate('homeProductTabs.products.product')
       .populate({
-        path: 'occasionSections.occasions.products'
+        path: 'occasionSections',
+        populate: {
+          path: 'occasions.products',
+          model: 'Product'
+        }
       });
     res.json(settings);
   } catch (err) {
