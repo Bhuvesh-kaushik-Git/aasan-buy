@@ -81,4 +81,18 @@ router.post('/:id/reviews', async (req, res) => {
   }
 });
 
+// @route  POST /api/products/bulk-stock  – Efficiency: check stock for multiple items
+router.post('/bulk-stock', async (req, res) => {
+  try {
+    const { itemIds } = req.body;
+    if (!Array.isArray(itemIds)) return res.status(400).json({ error: 'Array of itemIds required' });
+    const products = await Product.find({ _id: { $in: itemIds } }).select('stock');
+    const stockMap = {};
+    products.forEach(p => { stockMap[p._id] = p.stock; });
+    res.json(stockMap);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

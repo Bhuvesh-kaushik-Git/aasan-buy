@@ -15,7 +15,7 @@ const StatCard = ({ label, value, icon, color, sub }) => (
   </div>
 );
 
-const DashboardModule = () => {
+const DashboardModule = ({ adminToken }) => {
   const [stats, setStats] = useState(null);
   const [lowStock, setLowStock] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
@@ -25,13 +25,13 @@ const DashboardModule = () => {
     const fetchData = async () => {
       try {
         const [ordersRes, productsRes] = await Promise.all([
-          fetch(`${API_URL}/api/orders`),
-          fetch(`${API_URL}/api/products?limit=100&page=1`),
+          fetch(`${API_URL}/api/orders`, { headers: { 'Authorization': `Bearer ${adminToken}` } }),
+          fetch(`${API_URL}/api/products?limit=100&page=1`, { headers: { 'Authorization': `Bearer ${adminToken}` } }),
         ]);
         const ordersData = await ordersRes.json();
         const productsData = await productsRes.json();
 
-        const orders = ordersData || [];
+        const orders = ordersData.orders || [];
         const products = productsData.products || [];
 
         const today = new Date().toDateString();
@@ -58,7 +58,18 @@ const DashboardModule = () => {
     fetchData();
   }, []);
 
-  if (loading) return <div className="flex items-center justify-center h-64 text-gray-400 font-bold">Loading Dashboard...</div>;
+  if (loading) return <div className="flex items-center justify-center h-64 text-gray-400 font-bold animate-pulse uppercase tracking-[0.2em] text-xs">Synchronizing Intelligence...</div>;
+
+  if (!stats) return (
+    <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+      <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+      </div>
+      <h3 className="text-xl font-black text-dark mb-2">Data Synchronization Failed</h3>
+      <p className="text-sm text-gray-400 max-w-xs">Could not connect to the Intelligence Hub. Please verify server status.</p>
+      <button onClick={() => window.location.reload()} className="mt-6 px-6 py-2 bg-primary text-white text-xs font-black uppercase tracking-widest rounded-xl">Retry Sync</button>
+    </div>
+  );
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-8 animate-fade-in-up">

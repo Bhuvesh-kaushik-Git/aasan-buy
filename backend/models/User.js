@@ -2,18 +2,20 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true },
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  name:     { type: String, required: true, trim: true },
+  email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true, select: false },
-  phone: { type: String, default: '' },
-  role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
+  phone:    { type: String, default: '' },
+  role:     { type: String, enum: ['customer', 'admin'], default: 'customer' },
+  isActive: { type: Boolean, default: true },   // Admin can disable accounts
   addresses: [{
-    label: { type: String, default: 'Home' },
+    label:   { type: String, default: 'Home' },
     address: String,
-    city: String,
-    state: String,
+    city:    String,
+    state:   String,
     pincode: String,
   }],
+  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
 }, { timestamps: true });
 
 // Hash password before saving

@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const SiteSettings = require('../models/SiteSettings');
+const { protect, adminOnly } = require('../middleware/auth');
 
-// @desc    Get site settings
+// @desc    Get site settings (Public for Storefront)
 // @route   GET /api/settings
 router.get('/', async (req, res) => {
   try {
@@ -26,9 +27,9 @@ router.get('/', async (req, res) => {
   }
 });
 
-// @desc    Update site settings
+// @desc    Update site settings (Admin Protected)
 // @route   PUT /api/settings
-router.put('/', async (req, res) => {
+router.put('/', protect, adminOnly, async (req, res) => {
   try {
     let settings = await SiteSettings.findOne({});
     if (settings) {

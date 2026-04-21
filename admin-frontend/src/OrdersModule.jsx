@@ -10,10 +10,12 @@ const statusColors = {
   Cancelled: 'bg-rose-50 text-rose-600 border-rose-100',
 };
 
-const OrdersModule = () => {
-  const [allOrders, setAllOrders] = useState([]);
+const OrdersModule = ({ adminToken }) => {
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
 
   // Filters
@@ -27,14 +29,18 @@ const OrdersModule = () => {
   const [bulkStatus, setBulkStatus] = useState('Shipped');
   const [bulkLoading, setBulkLoading] = useState(false);
 
-  useEffect(() => { fetchOrders(); }, []);
+  useEffect(() => { fetchOrders(); }, [page, statusFilter, searchQuery]);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/orders`);
+      const res = await fetch(`${API_URL}/api/orders?page=${page}&limit=${PAGE_SIZE}&search=${searchQuery}&status=${statusFilter}`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
       const data = await res.json();
-      setAllOrders(data);
+      setOrders(data.orders || []);
+      setPages(data.pages || 1);
+      setTotal(data.totalItems || 0);
     } catch (err) {
       console.error(err);
     } finally {
@@ -46,10 +52,13 @@ const OrdersModule = () => {
     try {
       await fetch(`${API_URL}/api/orders/${id}/status`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
         body: JSON.stringify({ status: newStatus }),
       });
-      setAllOrders(prev => prev.map(o => o._id === id ? { ...o, orderStatus: newStatus } : o));
+      setOrders(prev => prev.map(o => o._id === id ? { ...o, orderStatus: newStatus } : o));
     } catch (err) { console.error(err); }
   };
 
@@ -60,11 +69,14 @@ const OrdersModule = () => {
       await Promise.all(
         selectedIds.map(id => fetch(`${API_URL}/api/orders/${id}/status`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
           body: JSON.stringify({ status: bulkStatus }),
         }))
       );
-      setAllOrders(prev => prev.map(o => selectedIds.includes(o._id) ? { ...o, orderStatus: bulkStatus } : o));
+      setOrders(prev => prev.map(o => selectedIds.includes(o._id) ? { ...o, orderStatus: bulkStatus } : o));
       setSelectedIds([]);
     } catch (err) { console.error(err); }
     setBulkLoading(false);
@@ -78,24 +90,9 @@ const OrdersModule = () => {
     else setSelectedIds(prev => [...new Set([...prev, ...ids])]);
   };
 
-  // Filtering logic (client-side on fetched data)
-  const filtered = allOrders.filter(o => {
-    if (statusFilter !== 'All' && o.orderStatus !== statusFilter) return false;
-    if (dateFrom && new Date(o.createdAt) < new Date(dateFrom)) return false;
-    if (dateTo && new Date(o.createdAt) > new Date(dateTo + 'T23:59:59')) return false;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      return (
-        o.customerDetails?.fullName?.toLowerCase().includes(q) ||
-        o.customerDetails?.email?.toLowerCase().includes(q) ||
-        o._id.toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
-
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const pageOrders = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  // Filtered logic removed (now handled by server)
+  const totalPages = pages;
+  const pageOrders = orders;
 
   if (loading) return <div className="flex justify-center items-center h-64 text-gray-400 font-bold">Loading Orders...</div>;
 
@@ -108,7 +105,7 @@ const OrdersModule = () => {
         <div className="relative z-10">
           <span className="text-[11px] font-black text-secondary uppercase tracking-[0.4em] mb-1 block">Live Logistics</span>
           <h2 className="text-4xl font-black font-heading text-dark tracking-tighter">Orders Intelligence</h2>
-          <p className="text-xs text-gray-400 font-bold mt-1 uppercase tracking-widest">{filtered.length} Orders Synchronized · Page {page} of {totalPages || 1}</p>
+          <p className="text-xs text-gray-400 font-bold mt-1 uppercase tracking-widest">{total} Orders Synchronized · Page {page} of {pages}</p>
         </div>
         <button onClick={fetchOrders} className="relative z-10 flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-primary bg-primary/5 hover:bg-primary hover:text-white px-8 py-4 rounded-2xl transition-all shadow-soft border border-primary/10">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>

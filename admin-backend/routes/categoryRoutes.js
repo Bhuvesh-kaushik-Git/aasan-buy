@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const Category = require('../models/Category');
 const Product = require('../models/Product');
+const { protect, adminOnly } = require('../middleware/auth');
+
+router.use(protect, adminOnly);
 
 // @desc    Get all categories
 // @route   GET /api/categories

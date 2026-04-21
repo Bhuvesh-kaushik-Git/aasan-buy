@@ -16,7 +16,7 @@ const statusConfig = {
   rejected: { label: 'Rejected', cls: 'bg-red-100 text-red-700 border-red-200' },
 };
 
-const ReviewsModule = () => {
+const ReviewsModule = ({ adminToken }) => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('pending');
@@ -29,7 +29,9 @@ const ReviewsModule = () => {
   const fetchReviews = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/reviews?status=${statusFilter}`);
+      const res = await fetch(`${API_URL}/api/reviews?status=${statusFilter}`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
       const data = await res.json();
       setReviews(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -44,7 +46,10 @@ const ReviewsModule = () => {
     try {
       await fetch(`${API_URL}/api/reviews/${id}/moderate`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
         body: JSON.stringify({ status, adminNote: note }),
       });
       setReviews(prev => prev.filter(r => r._id !== id));
@@ -60,7 +65,10 @@ const ReviewsModule = () => {
   const deleteReview = async (id) => {
     if (!confirm('Delete this review permanently?')) return;
     try {
-      await fetch(`${API_URL}/api/reviews/${id}`, { method: 'DELETE' });
+      await fetch(`${API_URL}/api/reviews/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
       setReviews(prev => prev.filter(r => r._id !== id));
     } catch (err) { console.error(err); }
   };

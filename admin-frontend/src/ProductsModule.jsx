@@ -4,7 +4,7 @@ import 'react-quill/dist/quill.snow.css';
 import * as XLSX from 'xlsx';
 import TagInput from './components/TagInput';
 
-export default function ProductsModule() {
+export default function ProductsModule({ adminToken }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -15,11 +15,11 @@ export default function ProductsModule() {
 
   const [dbCategories, setDbCategories] = useState([]);
   useEffect(() => {
-    fetch('http://localhost:5001/api/categories')
+    fetch('http://localhost:5001/api/categories', { headers: { 'Authorization': `Bearer ${adminToken}` } })
        .then(r => r.json())
        .then(d => setDbCategories(d))
        .catch(e => console.error(e));
-  }, []);
+  }, [adminToken]);
 
   const [selectedIds, setSelectedIds] = useState([]);
   
@@ -29,7 +29,9 @@ export default function ProductsModule() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5001/api/products?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
+      const res = await fetch(`http://localhost:5001/api/products?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
       const data = await res.json();
       setProducts(data.products || []);
       setTotalPages(data.totalPages || 1);
@@ -74,7 +76,10 @@ export default function ProductsModule() {
     try {
       await fetch('http://localhost:5001/api/products/bulk', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
         body: JSON.stringify({ ids: selectedIds })
       });
       setSelectedIds([]);
@@ -116,7 +121,10 @@ export default function ProductsModule() {
         setLoading(true);
         const res = await fetch('http://localhost:5001/api/products/bulk', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
           body: JSON.stringify({ products: mappedProducts })
         });
         const result = await res.json();
@@ -157,7 +165,10 @@ export default function ProductsModule() {
 
       await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
         body: JSON.stringify(payload)
       });
       setEditingProduct(null);

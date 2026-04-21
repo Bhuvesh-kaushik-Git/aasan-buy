@@ -12,7 +12,7 @@ import Contact from './pages/Contact';
 import ThankYou from './pages/ThankYou';
 import Collection from './pages/Collection';
 import Footer from './components/Footer';
-import { useCart } from './context/CartContext';
+import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/Toast';
 
@@ -198,11 +198,13 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <ToastProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </ToastProvider>
+      <CartProvider>
+        <ToastProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </ToastProvider>
+      </CartProvider>
     </AuthProvider>
   );
 }

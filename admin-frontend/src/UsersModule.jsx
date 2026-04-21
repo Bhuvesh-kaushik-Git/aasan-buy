@@ -1,0 +1,138 @@
+import React, { useState, useEffect } from 'react';
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+const UsersModule = ({ adminToken }) => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState('');
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/users?page=${page}&search=${search}&limit=10`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const data = await res.json();
+      setUsers(data.users || []);
+      setPages(data.pages || 1);
+      setTotal(data.totalItems || 0);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchUsers(); }, [page, search]);
+
+  const toggleStatus = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/api/users/${id}/toggle-status`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      if (res.ok) {
+        setUsers(users.map(u => u._id === id ? { ...u, isActive: !u.isActive } : u));
+      }
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const deleteUser = async (id) => {
+    if (!window.confirm("Danger: Deleting a user will also orphan their order history. Proceed?")) return;
+    try {
+      const res = await fetch(`${API_URL}/api/users/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      if (res.ok) fetchUsers();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  return (
+    <div className="max-w-[1000px] mx-auto animate-fade-in-up">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[32px] border border-black/5 shadow-soft mb-8">
+        <div>
+          <h2 className="text-3xl font-black text-dark tracking-tighter">Customer Directory</h2>
+          <p className="text-sm text-gray-400 font-medium mt-1">Manage user accounts and access permissions ({total} total).</p>
+        </div>
+        <div className="relative">
+          <input 
+            type="text" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Search by name or email..."
+            className="w-full md:w-[300px] bg-gray-50 border border-gray-100 rounded-2xl px-12 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-primary focus:shadow-soft transition-all"
+          />
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-[32px] border border-black/5 shadow-soft overflow-hidden">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-50/50 border-b border-gray-100">
+              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Customer</th>
+              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Joined</th>
+              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Phone</th>
+              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Account State</th>
+              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {users.map(u => (
+              <tr key={u._id} className="group hover:bg-gray-50/30 transition-colors">
+                <td className="px-8 py-5">
+                   <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-primary/5 text-primary font-black flex items-center justify-center border border-primary/10">
+                        {u.name[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-black text-dark text-sm leading-none">{u.name}</p>
+                        <p className="text-[11px] text-gray-400 font-medium mt-1">{u.email}</p>
+                      </div>
+                   </div>
+                </td>
+                <td className="px-8 py-5 text-[11px] font-bold text-gray-500 uppercase tracking-widest">{new Date(u.createdAt).toLocaleDateString()}</td>
+                <td className="px-8 py-5 text-[12px] font-medium text-gray-500">{u.phone || 'N/A'}</td>
+                <td className="px-8 py-5">
+                   <button 
+                     onClick={() => toggleStatus(u._id)}
+                     className={`text-[9px] font-black uppercase px-3 py-1.5 rounded-xl transition-all ${u.isActive ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-red-500 hover:text-white hover:border-red-500' : 'bg-red-50 text-red-600 border border-red-100 hover:bg-emerald-500 hover:text-white hover:border-emerald-500'}`}
+                   >
+                     {u.isActive ? 'Active User' : 'Deactivated'}
+                   </button>
+                </td>
+                <td className="px-8 py-5 text-right">
+                   <button onClick={() => deleteUser(u._id)} className="opacity-0 group-hover:opacity-100 w-9 h-9 flex items-center justify-center bg-white border border-gray-100 rounded-xl text-red-400 shadow-soft hover:bg-red-500 hover:text-white transition-all ml-auto">✕</button>
+                </td>
+              </tr>
+            ))}
+            {loading && <tr><td colSpan="5" className="px-8 py-10 text-center animate-pulse text-primary font-black uppercase tracking-widest text-xs">Synchronizing users...</td></tr>}
+          </tbody>
+        </table>
+      </div>
+
+      {pages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-12 bg-white p-6 rounded-[24px] border border-black/5 shadow-soft w-fit mx-auto">
+          <button 
+            disabled={page === 1} onClick={() => setPage(p => p - 1)}
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-dark disabled:opacity-20 hover:bg-primary hover:text-white transition-all shadow-sm"
+          >←</button>
+          <span className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Page {page} of {pages}</span>
+          <button 
+            disabled={page === pages} onClick={() => setPage(p => p + 1)}
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-dark disabled:opacity-20 hover:bg-primary hover:text-white transition-all shadow-sm"
+          >→</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default UsersModule;

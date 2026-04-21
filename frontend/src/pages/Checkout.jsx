@@ -158,7 +158,6 @@ const Checkout = () => {
             if (vData.success) {
               clearCart();
               showToast('✅ Payment verified! Order confirmed.', 'success');
-              showToast('✅ Payment verified! Order confirmed.', 'success');
               navigate(`/thank-you?orderId=${data.order._id}`);
             } else {
               setError('Payment verification failed. Please contact support.');

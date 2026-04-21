@@ -26,27 +26,31 @@ export const CartProvider = ({ children }) => {
   }, [cart, isInitialized]);
 
   // ── Active Stock Validation ───────────────────────────────────────────────
-  // Called when cart drawer opens or cart changes. Checks live stock for each item.
+  // Optimized: Uses a single bulk endpoint to check stock for all items
   const validateCartStock = useCallback(async () => {
     if (cart.length === 0) { setStockWarnings({}); return; }
     setIsValidatingStock(true);
-    const warnings = {};
     try {
-      await Promise.all(
-        cart.map(async (item) => {
-          if (!item.productId) return;
-          const res = await fetch(`${API_URL}/api/products/${item.productId}`);
-          if (!res.ok) return;
-          const product = await res.json();
-          if (product.stock < item.quantity) {
-            warnings[item.productId] = product.stock; // 0 = out of stock
+      const itemIds = [...new Set(cart.map(i => i.productId))];
+      const res = await fetch(`${API_URL}/api/products/bulk-stock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemIds }),
+      });
+      if (res.ok) {
+        const stockMap = await res.json();
+        const warnings = {};
+        cart.forEach(item => {
+          const liveStock = stockMap[item.productId];
+          if (liveStock !== undefined && liveStock < item.quantity) {
+            warnings[item.productId] = liveStock;
           }
-        })
-      );
+        });
+        setStockWarnings(warnings);
+      }
     } catch (e) {
       console.error('Stock validation error:', e);
     }
-    setStockWarnings(warnings);
     setIsValidatingStock(false);
   }, [cart]);
 

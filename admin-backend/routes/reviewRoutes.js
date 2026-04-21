@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const Review = require('../models/Review');
 const Product = require('../models/Product');
+const { protect, adminOnly } = require('../middleware/auth');
+
+router.use(protect, adminOnly);
 
 // @route GET /api/reviews  – get ALL reviews (with filter by status)
 router.get('/', async (req, res) => {

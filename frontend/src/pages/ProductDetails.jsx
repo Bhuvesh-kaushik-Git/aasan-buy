@@ -2,13 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../components/Toast';
+import DOMPurify from 'dompurify';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 // ── Components ──────────────────────────────────────────────────────────────
 
-const SuggestionModal = ({ isOpen, onClose, onViewCart }) => {
+const SuggestionModal = ({ isOpen, onClose, onViewCart, relatedProducts = [] }) => {
+  const { addToCart } = useCart();
+  const { showToast } = useToast();
   if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 font-sans animate-fade-in">
       <div className="absolute inset-0 bg-dark/60 backdrop-blur-md" onClick={onClose} />
@@ -21,19 +25,17 @@ const SuggestionModal = ({ isOpen, onClose, onViewCart }) => {
         </div>
         <div className="p-8">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { title: 'Dairy Milk Silk', price: '125', img: 'https://images.unsplash.com/photo-1548845971-eb6df5c68b64?w=150&h=150&fit=crop' },
-              { title: 'Golden Balloon', price: '75', img: 'https://images.unsplash.com/photo-1530103862676-de8892bf309c?w=150&h=150&fit=crop' },
-              { title: 'Luxury Card', price: '99', img: 'https://images.unsplash.com/photo-1596482163351-7871b6980db7?w=150&h=150&fit=crop' },
-              { title: 'Premium Bear', price: '499', img: 'https://images.unsplash.com/photo-1559981421-3e0c0d5cb1ef?w=150&h=150&fit=crop' },
-            ].map((item, i) => (
+            {relatedProducts.slice(0, 4).map((item, i) => (
               <div key={i} className="group bg-white rounded-2xl p-3 flex flex-col items-center text-center border border-gray-100 shadow-soft hover:shadow-premium transition-all">
                 <div className="w-20 h-20 rounded-xl bg-gray-50 overflow-hidden mb-3">
-                  <img src={item.img} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <img src={item.images?.[0]} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 </div>
-                <span className="text-[11px] font-bold text-gray-500 mb-1 leading-tight">{item.title}</span>
+                <span className="text-[11px] font-bold text-gray-500 mb-1 leading-tight line-clamp-1">{item.name}</span>
                 <span className="text-[13px] font-black text-primary mb-3">₹{item.price}</span>
-                <button className="w-full text-[10px] font-black text-white bg-primary rounded-lg py-2 transition-all hover:bg-primary-light">Add to Box</button>
+                <button 
+                  onClick={() => { addToCart(item, 1); showToast(`${item.name} added!`, 'success'); }}
+                  className="w-full text-[10px] font-black text-white bg-primary rounded-lg py-2 transition-all hover:bg-primary-light"
+                >Add to Box</button>
               </div>
             ))}
           </div>
@@ -181,6 +183,7 @@ const ProductDetails = ({ onOpenCart }) => {
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
   const [showModal, setShowModal] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   const { addToCart } = useCart();
@@ -194,6 +197,14 @@ const ProductDetails = ({ onOpenCart }) => {
         if (data.colors?.length > 0) setSelectedColor(data.colors[0]);
         if (data.sizes?.length > 0) setSelectedSize(data.sizes[0]);
         setLoading(false);
+
+        // Fetch related products from same category
+        if (data.categories?.[0]) {
+          fetch(`${API_URL}/api/products?category=${data.categories[0]}&limit=5`)
+            .then(res => res.json())
+            .then(d => setRelatedProducts((d.products || []).filter(p => p._id !== id)))
+            .catch(() => {});
+        }
       })
       .catch(() => setLoading(false));
   }, [id]);
@@ -346,7 +357,7 @@ const ProductDetails = ({ onOpenCart }) => {
               <div className="bg-[#F8F9FB] rounded-3xl p-8 border border-gray-50">
                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Product Story</h4>
                   <div className="prose prose-sm text-gray-500 leading-relaxed font-medium mb-8">
-                      <div dangerouslySetInnerHTML={{ __html: product.description }} />
+                      <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }} />
                   </div>
                   {product.highlights?.length > 0 && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
@@ -370,6 +381,7 @@ const ProductDetails = ({ onOpenCart }) => {
         isOpen={showModal} 
         onClose={() => setShowModal(false)} 
         onViewCart={() => { setShowModal(false); navigate('/checkout'); }} 
+        relatedProducts={relatedProducts}
       />
     </div>
   );

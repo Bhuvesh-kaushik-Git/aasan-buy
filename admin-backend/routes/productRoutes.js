@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const { protect, adminOnly } = require('../middleware/auth');
+
+router.use(protect, adminOnly);
 
 // @desc    Get all products with pagination and search
 // @route   GET /api/admin/products

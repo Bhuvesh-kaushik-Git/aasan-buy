@@ -36,4 +36,12 @@ const orderSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // optional – null for guests
 }, { timestamps: true });
 
+// Indexes for high-speed admin lookups
+orderSchema.index({ createdAt: -1 });
+orderSchema.index({ orderStatus: 1 });
+orderSchema.index({ 'customerDetails.email': 1 });
+orderSchema.index({ 'customerDetails.fullName': 'text' });
+orderSchema.index({ razorpayOrderId: 1 });
+orderSchema.index({ user: 1 });
+
 module.exports = mongoose.model('Order', orderSchema);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 // A simple component to search through products and check off those belonging to a category
-const CategoryProductAssigner = ({ categoryName, categoryId, onSaveCategoryProducts }) => {
+const CategoryProductAssigner = ({ categoryName, categoryId, onSaveCategoryProducts, adminToken }) => {
   const [allProducts, setAllProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
@@ -9,7 +9,7 @@ const CategoryProductAssigner = ({ categoryName, categoryId, onSaveCategoryProdu
 
   // Load a large chunk of products to allow selection (limit 1000 for admin ease-of-use MVP)
   useEffect(() => {
-    fetch('http://localhost:5001/api/products?limit=1000')
+    fetch('http://localhost:5001/api/products?limit=1000', { headers: { 'Authorization': `Bearer ${adminToken}` } })
       .then(r => r.json())
       .then(d => {
          const prods = d.products || [];
@@ -35,7 +35,10 @@ const CategoryProductAssigner = ({ categoryName, categoryId, onSaveCategoryProdu
      try {
        await fetch(`http://localhost:5001/api/categories/${categoryId}/products`, {
          method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
+         headers: { 
+           'Content-Type': 'application/json',
+           'Authorization': `Bearer ${adminToken}`
+         },
          body: JSON.stringify({ productIds: selectedIds })
        });
        onSaveCategoryProducts(); // Callback to parent
@@ -85,7 +88,7 @@ const CategoryProductAssigner = ({ categoryName, categoryId, onSaveCategoryProdu
   );
 };
 
-export default function CategoriesModule() {
+export default function CategoriesModule({ adminToken }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
@@ -93,7 +96,9 @@ export default function CategoriesModule() {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5001/api/categories');
+      const res = await fetch('http://localhost:5001/api/categories', {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
       setCategories(await res.json());
     } catch (err) {
       console.error(err);
@@ -116,7 +121,10 @@ export default function CategoriesModule() {
     try {
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
         body: JSON.stringify({ name: editingCategory.name, image: editingCategory.image })
       });
       if(!res.ok) {
@@ -144,7 +152,10 @@ export default function CategoriesModule() {
   const handleDelete = async (id) => {
      if(!window.confirm("Are you sure you want to delete this category? It will be removed from all attached products.")) return;
      try {
-         await fetch(`http://localhost:5001/api/categories/${id}`, { method: 'DELETE' });
+         await fetch(`http://localhost:5001/api/categories/${id}`, { 
+           method: 'DELETE',
+           headers: { 'Authorization': `Bearer ${adminToken}` }
+         });
          fetchCategories();
      } catch (e) {
          console.error(e);
