@@ -72,7 +72,7 @@ const Header = ({ settings, onOpenCart }) => {
                </svg>
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-black font-heading text-primary leading-none tracking-tight">AASAN<span className="text-secondary">BUY.</span></span>
+              <span className="text-xl font-black font-heading text-primary leading-none tracking-tight">AASAN<span className="text-secondary">BUY</span></span>
               <span className="text-[8px] font-black text-gray-400 tracking-[0.3em] uppercase mt-0.5">Premium Curation</span>
             </div>
           </Link>
@@ -87,7 +87,7 @@ const Header = ({ settings, onOpenCart }) => {
                 type="text" value={searchQuery} 
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={() => setShowSuggestions(true)}
-                placeholder="Search products, brands, occasions..."
+                placeholder="Search products"
                 className="w-full h-12 bg-black/5 border border-transparent rounded-2xl pl-12 pr-6 text-[13px] font-black placeholder:text-gray-400 focus:bg-white focus:border-primary/10 focus:outline-none transition-all shadow-soft group-hover:bg-white"
               />
               {isSearching && (

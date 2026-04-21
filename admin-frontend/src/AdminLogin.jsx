@@ -36,7 +36,7 @@ const AdminLogin = ({ onLogin }) => {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10 text-secondary">
               <path d="M9.375 3a1.875 1.875 0 0 0 0 3.75h1.875v4.5H3.375A1.875 1.875 0 0 1 1.5 9.375v-.75c0-1.036.84-1.875 1.875-1.875h3.193A3.375 3.375 0 0 1 12 2.753a3.375 3.375 0 0 1 5.432 3.997h3.193c1.035 0 1.875.84 1.875 1.875v.75a1.875 1.875 0 0 1-1.875 1.875H12.75v-4.5h1.875a1.875 1.875 0 1 0-1.875-1.875V3zM12.75 12.75h7.5v6.375a2.625 2.625 0 0 1-2.625 2.625H6.375a2.625 2.625 0 0 1-2.625-2.625V12.75h7.5zm-1.5 0H3.75v6.375c0 .621.504 1.125 1.125 1.125h6.375v-7.5z"/>
             </svg>
-            <h1 className="text-3xl font-black text-white tracking-tight">Aasan Buy <span className="text-secondary">Admin Dashboard</span></h1>
+            <h1 className="text-3xl font-black text-white tracking-tight">AasanBuy <span className="text-secondary">Admin Dashboard</span></h1>
           </div>
           <p className="text-blue-200 text-sm">Secure Access Panel</p>
         </div>

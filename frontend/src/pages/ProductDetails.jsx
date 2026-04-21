@@ -209,7 +209,7 @@ const ProductDetails = ({ onOpenCart }) => {
       .catch(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center font-black text-primary animate-pulse text-2xl font-heading">AasanBuy.</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center font-black text-primary animate-pulse text-2xl font-heading">AasanBuy</div>;
   if (!product) return <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 py-20 px-4 text-center">
     <span className="text-6xl mb-4">🔍</span>
     <h2 className="text-2xl font-black text-dark">This Joy is Hidden...</h2>

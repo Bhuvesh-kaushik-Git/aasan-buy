@@ -48,7 +48,11 @@ function App() {
           <div className="w-10 h-10 bg-secondary rounded-2xl flex items-center justify-center text-dark font-black text-xl shadow-lg shadow-secondary/20 transition-transform hover:rotate-12 duration-500">
             A
           </div>
+<<<<<<< Updated upstream
           <h1 className="text-xl font-black font-heading tracking-tight">Aasan Buy <span className="text-secondary text-xs block uppercase tracking-widest mt-0.5 opacity-60">Admin Central</span></h1>
+=======
+          <h1 className="text-xl font-black font-heading tracking-tight">AasanBuy <span className="text-secondary">Admin Dashboard</span></h1>
+>>>>>>> Stashed changes
         </div>
         <nav className="flex-1 mt-8 px-4 overflow-y-auto no-scrollbar pb-8">
           <ul className="space-y-2">

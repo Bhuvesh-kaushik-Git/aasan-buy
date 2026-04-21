@@ -5,6 +5,7 @@ const rateLimit  = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 const User       = require('../models/User');
 const { protect } = require('../middleware/auth');
+const { sendWelcomeEmail } = require('../utils/mailSender');
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -19,6 +20,7 @@ const authLimiter = rateLimit({
 });
 
 // @route  POST /api/auth/register
+<<<<<<< Updated upstream
 router.post(
   '/register',
   authLimiter,
@@ -43,6 +45,30 @@ router.post(
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
+=======
+router.post('/register', async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body;
+    if (!name || !email || !password) return res.status(400).json({ error: 'Please fill all required fields' });
+
+    const exists = await User.findOne({ email });
+    if (exists) return res.status(400).json({ error: 'User already exists with this email' });
+
+    const user = await User.create({ name, email, password, phone });
+
+    // Send Welcome Email
+    sendWelcomeEmail(user.email, user.name);
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: generateToken(user._id),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+>>>>>>> Stashed changes
   }
 );
 

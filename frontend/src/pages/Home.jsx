@@ -100,6 +100,7 @@ const OccasionCard = ({ label, imageUrl, redirectUrl }) => (
 const Home = ({ settings }) => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentBanner, setCurrentBanner] = useState(0);
   const [activeProductTab, setActiveProductTab] = useState(0);
@@ -107,9 +108,14 @@ const Home = ({ settings }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/products?limit=20&page=1`);
-        const data = await res.json();
-        setProducts(data.products || []);
+        const [prodRes, catRes] = await Promise.all([
+          fetch(`${API_URL}/api/products?limit=20&page=1`),
+          fetch(`${API_URL}/api/categories`)
+        ]);
+        const prodData = await prodRes.json();
+        const catData = await catRes.json();
+        setProducts(prodData.products || []);
+        setCategories(catData || []);
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -203,6 +209,34 @@ const Home = ({ settings }) => {
           </div>
         </div>
       </section>
+
+      {/* ── Dynamic Category Strip ── */}
+      {categories.length > 0 && (
+        <section className="w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-10 pb-2 animate-fade-in-up">
+          <div className="flex gap-4 md:gap-8 overflow-x-auto no-scrollbar py-4 px-2 items-center justify-start md:justify-center">
+            {categories.map((cat, idx) => (
+              <a 
+                key={cat._id || idx} 
+                href={`/products?category=${encodeURIComponent(cat.name)}`}
+                className="group flex flex-col items-center gap-3 shrink-0"
+              >
+                <div className="w-[72px] h-[72px] md:w-[88px] md:h-[88px] rounded-full p-1 bg-gradient-to-tr from-primary via-secondary to-primary shadow-soft group-hover:shadow-premium transition-all duration-500 group-hover:-translate-y-2 group-hover:scale-105">
+                  <div className="w-full h-full rounded-full border-2 border-white overflow-hidden bg-white">
+                    <img 
+                      src={cat.image || 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48'} 
+                      alt={cat.name} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    />
+                  </div>
+                </div>
+                <span className="text-[10px] md:text-[11px] font-black text-dark uppercase tracking-widest text-center group-hover:text-primary transition-colors">
+                  {cat.name}
+                </span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── Value Propositions ── */}
       <section className="w-full max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 px-4 md:px-8 py-12">

@@ -1,9 +1,20 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Product = require('./models/Product');
-const SiteSettings = require('./models/SiteSettings'); // Assuming you want to seed this too
+const SiteSettings = require('./models/SiteSettings');
+const Category = require('./models/Category');
+const Coupon = require('./models/Coupon');
 
-// Sample data with Unsplash images (FNP style)
+const demoCategories = [
+  { name: 'Flowers', image: 'https://images.unsplash.com/photo-1563241598-6bbdb1e96723?w=400&q=80' },
+  { name: 'Luxe Cakes', image: 'https://images.unsplash.com/photo-1542826438-bd32f43d626f?w=400&q=80' },
+  { name: 'Hampers', image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&q=80' },
+  { name: 'Plants', image: 'https://images.unsplash.com/photo-1416879598555-21ff0ba82305?w=400&q=80' },
+  { name: 'Personalized', image: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&q=80' },
+  { name: 'Combos', image: 'https://images.unsplash.com/photo-1530103862676-de889c25e24b?w=400&q=80' }
+];
+
+// Sample data with Unsplash images (AasanBuy style)
 const products = [
   {
     name: "Red Roses Elegance With Glass Vase",
@@ -73,6 +84,21 @@ const seedData = async () => {
     // Seed products
     const createdProducts = await Product.insertMany(products);
     console.log(`${createdProducts.length} Products Successfully Seeded!`);
+
+    await Category.deleteMany({});
+    await Category.insertMany(demoCategories);
+    console.log('6 Categories Successfully Seeded!');
+
+    // Seed Welcome Coupon
+    await Coupon.deleteMany({ code: 'NEWUSER10' });
+    await Coupon.create({
+      code: 'NEWUSER10',
+      discountType: 'percentage',
+      discountValue: 10,
+      minOrderValue: 0,
+      isActive: true
+    });
+    console.log('Welcome Coupon (NEWUSER10) Seeded!');
 
     await SiteSettings.deleteMany({});
     await SiteSettings.create({
