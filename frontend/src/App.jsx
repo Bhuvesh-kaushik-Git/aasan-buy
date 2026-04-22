@@ -11,9 +11,13 @@ import Profile from './pages/Profile';
 import Contact from './pages/Contact';
 import ThankYou from './pages/ThankYou';
 import Collection from './pages/Collection';
+import ClaimAccount from './pages/ClaimAccount';
+import Wishlist from './pages/Wishlist';
+import TrackOrder from './pages/TrackOrder';
 import Footer from './components/Footer';
 import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
+import { WishlistProvider } from './context/WishlistContext';
 import { ToastProvider } from './components/Toast';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -178,7 +182,7 @@ function AppContent() {
       <main className="flex-grow pt-[120px] md:pt-[130px] pb-12">
         <Routes>
           <Route path="/" element={<Home settings={settings} />} />
-          <Route path="/product/:id" element={<ProductDetails onOpenCart={() => setCartOpen(true)} />} />
+          <Route path="/product/:id" element={<ProductDetails settings={settings} onOpenCart={() => setCartOpen(true)} />} />
           <Route path="/products" element={<Products />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/login" element={<Login />} />
@@ -187,9 +191,12 @@ function AppContent() {
           <Route path="/contact-us" element={<Contact />} />
           <Route path="/thank-you" element={<ThankYou />} />
           <Route path="/collection/:id" element={<Collection />} />
+          <Route path="/claim-account" element={<ClaimAccount />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/track-order" element={<TrackOrder />} />
         </Routes>
       </main>
-      <Footer />
+      <Footer settings={settings} />
       <CartDrawer cartOpen={cartOpen} setCartOpen={setCartOpen} />
     </div>
   );
@@ -198,13 +205,15 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <ToastProvider>
-          <Router>
-            <AppContent />
-          </Router>
-        </ToastProvider>
-      </CartProvider>
+      <ToastProvider>
+        <WishlistProvider>
+          <CartProvider>
+            <Router>
+              <AppContent />
+            </Router>
+          </CartProvider>
+        </WishlistProvider>
+      </ToastProvider>
     </AuthProvider>
   );
 }

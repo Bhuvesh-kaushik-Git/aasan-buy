@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../components/Toast';
+import { useWishlist } from '../context/WishlistContext';
+import OptimizedImage from '../components/OptimizedImage';
 import DOMPurify from 'dompurify';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // ── Components ──────────────────────────────────────────────────────────────
 
@@ -28,7 +30,7 @@ const SuggestionModal = ({ isOpen, onClose, onViewCart, relatedProducts = [] }) 
             {relatedProducts.slice(0, 4).map((item, i) => (
               <div key={i} className="group bg-white rounded-2xl p-3 flex flex-col items-center text-center border border-gray-100 shadow-soft hover:shadow-premium transition-all">
                 <div className="w-20 h-20 rounded-xl bg-gray-50 overflow-hidden mb-3">
-                  <img src={item.images?.[0]} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <OptimizedImage src={item.images?.[0]} alt={item.name} className="w-full h-full group-hover:scale-110 transition-transform duration-500" />
                 </div>
                 <span className="text-[11px] font-bold text-gray-500 mb-1 leading-tight line-clamp-1">{item.name}</span>
                 <span className="text-[13px] font-black text-primary mb-3">₹{item.price}</span>
@@ -174,9 +176,78 @@ const ReviewsSection = ({ productId }) => {
   );
 };
 
-// ── Main Page ─────────────────────────────────────────────────────────────
+const RecommendationRow = ({ row, currentProduct }) => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-const ProductDetails = ({ onOpenCart }) => {
+  useEffect(() => {
+    const fetchRowProducts = async () => {
+      try {
+        let ids = [];
+        if (row.type === 'manual') {
+          ids = row.items || [];
+        } else if (row.type === 'ai') {
+          // Dynamic AI: Use product-specific recs if they exist, otherwise fallback to row curation
+          ids = currentProduct.aiSuggestedProducts?.length > 0 
+            ? currentProduct.aiSuggestedProducts 
+            : (row.items || []);
+        }
+
+        if ((row.type === 'manual' || row.type === 'ai') && ids.length === 0) {
+           setLoading(false);
+           return;
+        }
+
+        let url = `${API_URL}/api/products?limit=8`;
+        if (ids.length > 0) url += `&ids=${ids.join(',')}`;
+        else if (row.type === 'category') url += `&category=${currentProduct.categories?.[0] || ''}`;
+        else if (row.type === 'trending') url += `&sort=trending`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+        setProducts((data.products || []).filter(p => p._id !== currentProduct._id));
+      } catch (err) {
+        console.error('Error fetching row products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRowProducts();
+  }, [row, currentProduct]);
+
+  if (!loading && products.length === 0) return null;
+
+  const label = row.type === 'manual' ? 'Handpicked Selection' : 
+                row.type === 'ai' ? 'AI Recommended' : 
+                row.type === 'category' ? 'Similar Items' : 'Trending Now';
+
+  return (
+    <div className="mt-16 space-y-8 animate-fade-in-up">
+       <div className="flex items-center gap-4">
+          <h3 className="text-xl font-black font-heading text-dark pr-6 border-r border-gray-200">{row.rowTitle}</h3>
+          <span className="text-[10px] font-black text-secondary uppercase tracking-[0.3em]">{label}</span>
+       </div>
+       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+          {loading ? (
+             Array(5).fill(0).map((_, i) => <div key={i} className="aspect-[3/4] bg-white rounded-3xl animate-pulse border border-gray-50" />)
+          ) : (
+             products.map(p => (
+                <Link key={p._id} to={`/product/${p._id}`} className="group bg-white rounded-3xl p-4 border border-black/5 hover:border-primary/20 hover:shadow-premium transition-all">
+                   <div className="aspect-square rounded-2xl bg-gray-50 overflow-hidden mb-4 relative">
+                      <img src={p.images?.[0]} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                      {p.price < p.mrp && <span className="absolute top-2 left-2 bg-cta-buy text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase">Offer</span>}
+                   </div>
+                   <h4 className="text-[11px] font-black text-dark line-clamp-1 mb-1 group-hover:text-primary transition-colors">{p.name}</h4>
+                   <p className="text-[13px] font-black text-primary">₹{p.price.toLocaleString()}</p>
+                </Link>
+             ))
+          )}
+       </div>
+    </div>
+  );
+};
+
+const ProductDetails = ({ settings, onOpenCart }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
@@ -186,7 +257,11 @@ const ProductDetails = ({ onOpenCart }) => {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
+  const [giftWraps, setGiftWraps] = useState([]);
+  const [isGift, setIsGift] = useState(false);
+  const [selectedGiftWrap, setSelectedGiftWrap] = useState(null);
   const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -207,6 +282,15 @@ const ProductDetails = ({ onOpenCart }) => {
         }
       })
       .catch(() => setLoading(false));
+
+    // Fetch active gift wraps
+    fetch(`${API_URL}/api/giftwraps`)
+      .then(r => r.json())
+      .then(data => {
+        setGiftWraps(Array.isArray(data) ? data : []);
+        if (data.length > 0) setSelectedGiftWrap(data[0]);
+      })
+      .catch(() => {});
   }, [id]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center font-black text-primary animate-pulse text-2xl font-heading">AasanBuy.</div>;
@@ -243,7 +327,7 @@ const ProductDetails = ({ onOpenCart }) => {
            {/* Left: Enhanced Images */}
            <div className="w-full lg:w-[48%] xl:w-[45%] bg-[#F8F9FB] flex flex-col lg:border-r border-gray-100 p-4 md:p-8">
               <div className="relative aspect-square bg-white rounded-[32px] shadow-soft border border-gray-100 overflow-hidden mb-6 flex items-center justify-center p-8 group">
-                  <img src={displayImages[activeImg]} className="max-w-full max-h-full object-contain transition-transform duration-700 group-hover:scale-110" alt={product.name} />
+                  <OptimizedImage src={displayImages[activeImg]} className="max-w-full max-h-full transition-transform duration-700 group-hover:scale-110" alt={product.name} />
                   {isOutOfStock && (
                       <div className="absolute inset-0 bg-dark/40 backdrop-blur-[2px] flex items-center justify-center">
                           <span className="bg-white text-dark font-black px-8 py-3 rounded-2xl tracking-[0.2em] shadow-2xl">SOLDOUT</span>
@@ -262,7 +346,7 @@ const ProductDetails = ({ onOpenCart }) => {
                     key={i} onClick={() => setActiveImg(i)}
                     className={`shrink-0 w-24 h-24 rounded-2xl border-2 transition-all p-2 bg-white ${activeImg === i ? 'border-primary ring-4 ring-primary/5 scale-95 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'}`}
                    >
-                     <img src={img} className="w-full h-full object-contain" />
+                     <OptimizedImage src={img} className="w-full h-full" />
                    </button>
                  ))}
               </div>
@@ -329,22 +413,70 @@ const ProductDetails = ({ onOpenCart }) => {
                  )}
               </div>
 
+              {/* Gift Wrap Extension */}
+              {giftWraps.length > 0 && (
+                <div className="mb-10 bg-white border border-gray-100 rounded-3xl p-6 shadow-soft">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">🎁</span>
+                      <div>
+                        <h4 className="text-[13px] font-black text-dark">Make this a Gift?</h4>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Add a premium wrap to your box</p>
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" checked={isGift} onChange={e => setIsGift(e.target.checked)} className="sr-only peer" />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+                    </label>
+                  </div>
+                  
+                  {isGift && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4 animate-fade-in">
+                       {giftWraps.map(wrap => (
+                         <button 
+                          key={wrap._id} 
+                          onClick={() => setSelectedGiftWrap(wrap)}
+                          className={`flex flex-col items-center p-3 rounded-2xl border-2 transition-all ${selectedGiftWrap?._id === wrap._id ? 'border-secondary bg-secondary/5 ring-4 ring-secondary/5' : 'border-gray-50 bg-gray-50/30 hover:border-gray-200'}`}
+                         >
+                            <img src={wrap.image} loading="lazy" alt="" className="w-full h-16 object-contain mb-2 rounded-lg" />
+                            <span className="text-[10px] font-black text-dark truncate w-full text-center">{wrap.title}</span>
+                            <span className="text-[11px] font-black text-secondary">₹{wrap.price}</span>
+                         </button>
+                       ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Action Block */}
               <div className="space-y-4 mb-12">
                   <div className="flex gap-4">
                     <button 
-                      onClick={() => { addToCart(product, 1, selectedColor, selectedSize); setShowModal(true); showToast(`${product.name} added to box!`, "success"); }}
+                      onClick={() => { 
+                        addToCart(product, 1, selectedColor, selectedSize, isGift ? selectedGiftWrap : null); 
+                        setShowModal(true); 
+                        showToast(`${product.name} added to box!`, "success"); 
+                      }}
                       disabled={isOutOfStock}
                       className="flex-1 h-16 bg-[#F8F9FB] text-primary border-2 border-primary/10 font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-white hover:border-primary transition-all disabled:opacity-50 btn-premium"
                     >
                       Add to Box
                     </button>
                     <button 
-                      onClick={() => { addToCart(product, 1, selectedColor, selectedSize); navigate('/checkout'); }}
+                      onClick={() => { 
+                        addToCart(product, 1, selectedColor, selectedSize, isGift ? selectedGiftWrap : null); 
+                        navigate('/checkout'); 
+                      }}
                       disabled={isOutOfStock}
                       className="flex-[1.5] h-16 bg-cta-buy text-white font-black rounded-2xl shadow-xl shadow-cta-buy/20 flex items-center justify-center gap-2 transform active:scale-95 transition-all hover:-translate-y-1 hover:brightness-110 disabled:opacity-50 btn-premium"
                     >
                       Buy Now & Save
+                    </button>
+                    <button 
+                       onClick={() => toggleWishlist(product)}
+                       className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all border-2 ${isInWishlist(id) ? 'bg-rose-50 border-rose-100 text-rose-500 shadow-xl shadow-rose-500/10' : 'bg-[#F8F9FB] border-gray-100 text-gray-400 hover:bg-white hover:text-rose-500 hover:border-rose-100'}`}
+                    >
+                       <svg xmlns="http://www.w3.org/2000/svg" fill={isInWishlist(id) ? "currentColor" : "none"} viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
                     </button>
                   </div>
                  <div className="flex items-center justify-center gap-4 text-[11px] font-bold text-gray-400">
@@ -375,6 +507,24 @@ const ProductDetails = ({ onOpenCart }) => {
               <ReviewsSection productId={id} />
            </div>
         </div>
+      </div>
+
+      {/* Dynamic Recommendation Rows (Product-Specific Override or Global Fallback) */}
+      <div className="max-w-[1400px] mx-auto px-6 mt-20">
+         {(() => {
+           let rows = product.customRecommendationRows?.length > 0 
+             ? product.customRecommendationRows 
+             : (settings?.productDetailsRows || []);
+           
+           // Ensure AI recommendations show even if the admin hasn't created a CMS row for it
+           if (product.aiSuggestedProducts?.length > 0 && !rows.some(r => r.type === 'ai')) {
+             rows = [...rows, { rowTitle: 'AI Recommended For You', type: 'ai' }];
+           }
+           
+           return rows.map((row, idx) => (
+             <RecommendationRow key={idx} row={row} currentProduct={product} />
+           ));
+         })()}
       </div>
 
       <SuggestionModal 

@@ -22,7 +22,11 @@ function App() {
     localStorage.setItem('aasanAdmin', JSON.stringify(userData));
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+      await fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+    } catch (err) {}
     setAdminUser(null);
     localStorage.removeItem('aasanAdmin');
   };

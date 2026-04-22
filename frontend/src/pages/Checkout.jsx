@@ -51,12 +51,27 @@ const Checkout = () => {
   });
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const [couponCode, setCouponCode] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [couponMsg, setCouponMsg] = useState(null); // { type: 'success'|'error', text, amount }
   const [discount, setDiscount] = useState(0);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [isCouponAnimated, setIsCouponAnimated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [useAasanCoins, setUseAasanCoins] = useState(false);
   const { showToast } = useToast();
+
+  const handleSelectAddress = (addr) => {
+    setFormData({
+      fullName: user?.name || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
+      address: addr.address,
+      city: addr.city,
+      state: addr.state,
+      pincode: addr.pincode
+    });
+  };
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -75,7 +90,8 @@ const Checkout = () => {
   }
 
   const subtotal = getCartTotal();
-  const finalTotal = Math.max(0, subtotal - discount);
+  const aasanCoinsDiscount = useAasanCoins ? Math.min(user?.aasanCoins || 0, subtotal - discount) : 0;
+  const finalTotal = Math.max(0, subtotal - discount - aasanCoinsDiscount);
 
   const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -83,16 +99,19 @@ const Checkout = () => {
     if (!couponCode.trim()) return;
     setCouponLoading(true);
     setCouponMsg(null);
+    setIsCouponAnimated(false);
     try {
       const res = await fetch(`${API_URL}/api/coupons/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponCode, orderTotal: subtotal }),
+        credentials: 'include',
+        body: JSON.stringify({ code: couponCode, orderTotal: subtotal, userId: user?._id }),
       });
       const data = await res.json();
       if (res.ok && data.valid) {
         setDiscount(data.discountAmount);
         setCouponMsg({ type: 'success', text: `Coupon applied! You saved ₹${data.discountAmount}`, amount: data.discountAmount });
+        setIsCouponAnimated(true);
       } else {
         setDiscount(0);
         setCouponMsg({ type: 'error', text: data.error || 'Invalid coupon' });
@@ -108,6 +127,7 @@ const Checkout = () => {
     setDiscount(0);
     setCouponCode('');
     setCouponMsg(null);
+    setIsCouponAnimated(false);
   };
 
   const handlePlaceOrder = async (e) => {
@@ -121,11 +141,13 @@ const Checkout = () => {
         totalAmount: subtotal,
         paymentMethod,
         couponCode: discount > 0 ? couponCode : undefined,
+        useAasanCoins: useAasanCoins,
         currency: CURRENCY,
       };
       const res = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
       const data = await res.json();
@@ -147,6 +169,7 @@ const Checkout = () => {
             const verifyRes = await fetch(`${API_URL}/api/orders/verify-payment`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
               body: JSON.stringify({
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
@@ -196,6 +219,26 @@ const Checkout = () => {
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h2 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-5">Shipping Information</h2>
+            
+            {user?.addresses?.length > 0 && (
+              <div className="mb-6">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Saved Addresses</label>
+                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                   {user.addresses.map((addr) => (
+                      <button 
+                         key={addr._id}
+                         type="button"
+                         onClick={() => handleSelectAddress(addr)}
+                         className="shrink-0 bg-gray-50 border border-gray-100 p-4 rounded-2xl text-left hover:border-secondary transition-all group"
+                      >
+                         <p className="text-[10px] font-black text-secondary uppercase tracking-tight mb-1">{addr.label}</p>
+                         <p className="text-[11px] font-bold text-dark truncate w-32">{addr.address}</p>
+                      </button>
+                   ))}
+                </div>
+              </div>
+            )}
+
             <form id="checkout-form" onSubmit={handlePlaceOrder} className="space-y-4">
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Full Name</label>
@@ -258,6 +301,7 @@ const Checkout = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-bold text-dark line-clamp-1">{item.name}</p>
                     {item.selectedColor && <p className="text-[10px] text-gray-500">Color: {item.selectedColor.name}</p>}
+                    {item.giftWrap && <p className="text-[10px] text-rose-500 font-bold">🎁 Wrapped (+₹{item.giftWrap.price})</p>}
                     <p className="text-[11px] font-bold text-secondary">Qty: {item.quantity}</p>
                   </div>
                   <p className="font-black text-dark text-[13px] shrink-0">₹{item.price * item.quantity}</p>
@@ -269,7 +313,7 @@ const Checkout = () => {
             <div className="mb-4">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">Promo Code</label>
               {discount > 0 ? (
-                <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-2.5">
+                <div className={`flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 ${isCouponAnimated ? 'animate-golden-shine' : ''}`}>
                   <div>
                     <p className="text-sm font-bold text-green-700">{couponCode.toUpperCase()} applied</p>
                     <p className="text-[11px] text-green-600">Saving ₹{discount}</p>
@@ -293,10 +337,40 @@ const Checkout = () => {
               )}
             </div>
 
+            {/* AasanCoins Section */}
+            {user && (user.aasanCoins > 0 || useAasanCoins) && (
+               <div className="mb-4 bg-amber-50 border border-amber-200 p-4 rounded-xl shadow-inner">
+                  <div className="flex items-center justify-between mb-2">
+                     <div className="flex items-center gap-2">
+                        <span className="text-lg">🪙</span>
+                        <h4 className="text-[11px] font-black text-amber-800 uppercase tracking-widest">AasanCoins Balance</h4>
+                     </div>
+                     <span className="text-sm font-black text-amber-600">{user.aasanCoins}</span>
+                  </div>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                     <input type="checkbox" checked={useAasanCoins} onChange={e => setUseAasanCoins(e.target.checked)} className="w-5 h-5 accent-secondary" />
+                     <span className="text-xs font-bold text-amber-700 group-hover:text-amber-900 transition-colors">Apply coins for instant discount</span>
+                  </label>
+               </div>
+            )}
+
+            {!user?.referredBy && (
+               <div className="mb-4">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">Referral Code (Optional)</label>
+                  <input
+                    value={referralCode} onChange={e => setReferralCode(e.target.value.toUpperCase())}
+                    placeholder="Shared by a friend?"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold uppercase focus:outline-none focus:border-secondary transition-all"
+                  />
+                  <p className="text-[9px] text-gray-400 mt-1.5 font-medium">Enter a friend's code to reward them!</p>
+               </div>
+            )}
+
             {/* Totals */}
             <div className="border-t border-gray-100 pt-4 space-y-2">
               <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span>₹{subtotal}</span></div>
-              {discount > 0 && <div className="flex justify-between text-sm font-bold text-green-600"><span>Discount</span><span>- ₹{discount}</span></div>}
+              {discount > 0 && <div className="flex justify-between text-sm font-bold text-green-600"><span>Coupon Discount</span><span>- ₹{discount}</span></div>}
+              {aasanCoinsDiscount > 0 && <div className="flex justify-between text-sm font-bold text-amber-600"><span>AasanCoins Offset</span><span>- ₹{aasanCoinsDiscount}</span></div>}
               <div className="flex justify-between text-sm text-gray-500"><span>Shipping</span><span className="text-green-500 font-bold">FREE</span></div>
               <div className="flex justify-between font-black text-[18px] text-dark pt-2 border-t border-gray-100">
                 <span>Total</span><span>₹{finalTotal}</span>

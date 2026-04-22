@@ -17,6 +17,10 @@ const orderSchema = new mongoose.Schema({
     quantity: { type: Number, required: true },
     selectedColor: { type: mongoose.Schema.Types.Mixed },
     selectedSize: { type: String },
+    giftWrap: {
+      title: String,
+      price: { type: Number, default: 0 }
+    },
     image: { type: String },
   }],
   totalAmount: { type: Number, required: true },
@@ -30,9 +34,18 @@ const orderSchema = new mongoose.Schema({
   razorpayPaymentId: { type: String },
   orderStatus: {
     type: String,
-    enum: ['Processing', 'Shipped', 'Delivered', 'Cancelled'],
+    enum: ['Processing', 'Shipped', 'Delivered', 'Cancelled', 'Refunded'],
     default: 'Processing',
   },
+  tracking: {
+    carrier: { type: String, default: '' },
+    trackingId: { type: String, default: '' },
+    trackingUrl: { type: String, default: '' },
+    lastStatusUpdate: { type: String, default: 'Order Received' },
+  },
+  referralAttributed: { type: Boolean, default: false },
+  aasanCoinsUsed: { type: Number, default: 0 },
+  aasanCoinsEarned: { type: Number, default: 0 },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // optional – null for guests
 }, { timestamps: true });
 

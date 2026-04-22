@@ -57,7 +57,30 @@ const siteSettingsSchema = new mongoose.Schema({
       ]
     }
   ],
-  footerText: { type: String, default: '© 2026 AasanBuy. All rights reserved.' }
+  footer: {
+    sections: [
+      {
+        title: { type: String, default: 'About Us' },
+        links: [{ label: String, url: String }]
+      }
+    ],
+    socialLinks: {
+      facebook:  { type: String, default: '' },
+      instagram: { type: String, default: '' },
+      twitter:   { type: String, default: '' },
+      youtube:   { type: String, default: '' },
+    },
+    copyright: { type: String, default: '© 2026 AasanBuy. All rights reserved.' }
+  },
+  productDetailsRows: [
+    {
+      rowTitle: { type: String, required: true },
+      type:     { type: String, enum: ['manual', 'ai', 'category', 'trending'], default: 'manual' },
+      category: { type: String }, // For 'category' type
+      seedProduct: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' }, // Context for AI
+      items:    [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }] // For 'manual' type
+    }
+  ]
 }, {
   timestamps: true,
 });
