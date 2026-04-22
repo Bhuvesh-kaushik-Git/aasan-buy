@@ -20,6 +20,15 @@ const productSchema = new mongoose.Schema({
   highlights: [{ type: String }],
   rating:      { type: Number, default: 0 },
   reviewCount: { type: Number, default: 0 },
+  aiSuggestedProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+  customRecommendationRows: [
+    {
+      rowTitle: { type: String },
+      type:     { type: String, enum: ['manual', 'ai', 'category', 'trending'], default: 'manual' },
+      seedProduct: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+      items:    [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
+    }
+  ]
 }, { timestamps: true });
 
 // ── Performance Indexes ────────────────────────────────────────────────────────

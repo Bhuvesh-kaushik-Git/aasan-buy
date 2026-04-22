@@ -1,8 +1,9 @@
 require('dotenv').config();
 const express   = require('express');
 const cors      = require('cors');
-const helmet    = require('helmet');
-const connectDB = require('./config/db');
+const helmet      = require('helmet');
+const cookieParser = require('cookie-parser');
+const connectDB    = require('./config/db');
 
 const app = express();
 connectDB();
@@ -17,6 +18,7 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/auth',       require('./routes/authRoutes'));
@@ -26,6 +28,7 @@ app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/orders',     require('./routes/orderRoutes'));
 app.use('/api/coupons',    require('./routes/couponRoutes'));
 app.use('/api/wishlist',   require('./routes/wishlistRoutes'));
+app.use('/api/giftwraps',  require('./routes/giftWrapRoutes'));
 
 // ── Health Check ──────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));

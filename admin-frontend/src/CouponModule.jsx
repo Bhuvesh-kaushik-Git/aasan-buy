@@ -15,7 +15,9 @@ const CouponModule = ({ adminToken }) => {
     minOrderValue: 0,
     maxUses: '',
     expiresAt: '',
-    isActive: true
+    isActive: true,
+    isNewUserOnly: false,
+    assignedTo: ''
   });
 
   const fetchCoupons = async () => {
@@ -40,6 +42,8 @@ const CouponModule = ({ adminToken }) => {
     const method = editingCoupon ? 'PUT' : 'POST';
     const url = editingCoupon ? `${API_URL}/api/coupons/${editingCoupon._id}` : `${API_URL}/api/coupons`;
     
+    const assignedArray = form.assignedTo ? form.assignedTo.split(',').map(s => s.trim()).filter(Boolean) : [];
+
     try {
       const res = await fetch(url, {
         method,
@@ -49,7 +53,8 @@ const CouponModule = ({ adminToken }) => {
         },
         body: JSON.stringify({
            ...form,
-           maxUses: form.maxUses === '' ? null : parseInt(form.maxUses),
+           assignedTo: assignedArray,
+           maxUses: form.maxUses === '' || form.maxUses === null ? null : parseInt(form.maxUses),
            expiresAt: form.expiresAt === '' ? null : form.expiresAt
         })
       });
@@ -57,7 +62,7 @@ const CouponModule = ({ adminToken }) => {
         alert(editingCoupon ? "Coupon updated!" : "Coupon created!");
         setShowForm(false);
         setEditingCoupon(null);
-        setForm({ code: '', discountType: 'percentage', discountValue: 0, minOrderValue: 0, maxUses: '', expiresAt: '', isActive: true });
+        setForm({ code: '', discountType: 'percentage', discountValue: 0, minOrderValue: 0, maxUses: '', expiresAt: '', isActive: true, isNewUserOnly: false, assignedTo: '' });
         fetchCoupons();
       } else {
         const d = await res.json();
@@ -92,7 +97,9 @@ const CouponModule = ({ adminToken }) => {
       minOrderValue: c.minOrderValue,
       maxUses: c.maxUses || '',
       expiresAt: c.expiresAt ? c.expiresAt.split('T')[0] : '',
-      isActive: c.isActive
+      isActive: c.isActive,
+      isNewUserOnly: c.isNewUserOnly || false,
+      assignedTo: Array.isArray(c.assignedTo) ? c.assignedTo.join(', ') : ''
     });
     setShowForm(true);
   };
@@ -142,10 +149,23 @@ const CouponModule = ({ adminToken }) => {
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Expiry Date (Optional)</label>
               <input type="date" value={form.expiresAt} onChange={e => setForm({...form, expiresAt: e.target.value})} className="w-full bg-gray-50 border border-transparent rounded-xl px-4 py-3 text-sm focus:bg-white focus:border-primary focus:outline-none transition-all" />
             </div>
-            <div className="flex items-center gap-2 pt-6">
-              <input type="checkbox" checked={form.isActive} onChange={e => setForm({...form, isActive: e.target.checked})} className="w-4 h-4 accent-primary" />
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Active</label>
+            
+            <div className="lg:col-span-3">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Assign to Specific Customer IDs (Optional)</label>
+              <input type="text" value={form.assignedTo} onChange={e => setForm({...form, assignedTo: e.target.value})} placeholder="Comma separated user IDs..." className="w-full bg-gray-50 border border-transparent rounded-xl px-4 py-3 text-sm focus:bg-white focus:border-primary focus:outline-none transition-all" />
             </div>
+
+            <div className="flex flex-wrap items-center gap-6 pt-6">
+              <div className="flex items-center gap-2">
+                <input type="checkbox" checked={form.isActive} onChange={e => setForm({...form, isActive: e.target.checked})} className="w-4 h-4 accent-emerald-500" />
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Active</label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" checked={form.isNewUserOnly} onChange={e => setForm({...form, isNewUserOnly: e.target.checked})} className="w-4 h-4 accent-primary" />
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">New User Only</label>
+              </div>
+            </div>
+
             <div className="lg:col-span-2 pt-6 flex justify-end">
                <button type="submit" className="bg-emerald-500 text-white font-black text-xs uppercase tracking-widest px-10 py-3.5 rounded-2xl shadow-xl shadow-emerald-200 hover:brightness-110 transition-all">
                  {editingCoupon ? 'Update Coupon' : 'Create Coupon'}
@@ -161,6 +181,7 @@ const CouponModule = ({ adminToken }) => {
             <tr className="bg-gray-50/50 border-b border-gray-100">
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Code</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Benefit</th>
+              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Eligibility</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Usage</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Expiry</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
@@ -172,6 +193,15 @@ const CouponModule = ({ adminToken }) => {
               <tr key={c._id} className="group hover:bg-gray-50/30 transition-colors">
                 <td className="px-8 py-5"><span className="font-black text-primary text-sm px-3 py-1.5 bg-primary/5 rounded-xl border border-primary/10">{c.code}</span></td>
                 <td className="px-8 py-5 text-sm font-bold text-dark">{c.discountType === 'percentage' ? `${c.discountValue}%` : `₹${c.discountValue}`}</td>
+                <td className="px-8 py-5">
+                   {c.isNewUserOnly ? (
+                     <span className="text-[9px] font-black text-primary uppercase bg-primary/5 px-2 py-1 rounded">New User Only</span>
+                   ) : c.assignedTo?.length > 0 ? (
+                     <span className="text-[9px] font-black text-emerald-600 uppercase bg-emerald-50 px-2 py-1 rounded">Targeted</span>
+                   ) : (
+                     <span className="text-[9px] font-black text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">General</span>
+                   )}
+                </td>
                 <td className="px-8 py-5 text-[11px] font-medium text-gray-500">
                    {c.usedCount} / {c.maxUses === null ? '∞' : c.maxUses}
                 </td>

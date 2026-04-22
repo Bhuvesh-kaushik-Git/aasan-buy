@@ -12,6 +12,7 @@ const ThankYou = () => {
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [recommendedProducts, setRecommendedProducts] = useState([]);
 
     useEffect(() => {
         if (!orderId) {
@@ -25,6 +26,18 @@ const ThankYou = () => {
                 if (!res.ok) throw new Error('Order not found');
                 const data = await res.json();
                 setOrder(data);
+
+                // Fetch recommendations based on first item's category
+                if (data.items?.[0]?.category) {
+                     const recRes = await fetch(`${API_URL}/api/products?category=${data.items[0].category}&limit=4`);
+                     const recData = await recRes.json();
+                     setRecommendedProducts((recData.products || []).filter(p => !data.items.find(item => item.productId === p._id)));
+                } else {
+                     // Fallback to trending
+                     const recRes = await fetch(`${API_URL}/api/products?limit=4&sort=trending`);
+                     const recData = await recRes.json();
+                     setRecommendedProducts(recData.products || []);
+                }
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -85,7 +98,7 @@ const ThankYou = () => {
                                 {order.items.map((item, idx) => (
                                     <div key={idx} className="flex gap-6 items-center group">
                                         <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
-                                            <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={item.name} />
+                                            <img src={item.image} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={item.name} />
                                         </div>
                                         <div className="flex-grow">
                                             <h3 className="text-sm font-black text-dark group-hover:text-primary transition-colors">{item.name}</h3>
@@ -177,8 +190,29 @@ const ThankYou = () => {
 
                 </div>
 
+                {/* ── Recommendations ── */}
+                {recommendedProducts.length > 0 && (
+                    <div className="mt-20 border-t border-gray-100 pt-16 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-xl font-black text-dark tracking-tight">You Might Also Like</h2>
+                            <Link to="/products" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Explore All →</Link>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            {recommendedProducts.map(p => (
+                                <Link key={p._id} to={`/product/${p._id}`} className="group bg-white rounded-3xl p-4 border border-black/5 hover:border-primary/20 transition-all shadow-soft overflow-hidden">
+                                    <div className="aspect-square rounded-2xl bg-gray-50 mb-4 overflow-hidden">
+                                        <img src={p.images?.[0]} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                                    </div>
+                                    <h3 className="text-[11px] font-black text-dark line-clamp-1 mb-1">{p.name}</h3>
+                                    <p className="text-[13px] font-black text-primary">₹{p.price.toLocaleString()}</p>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* ── Footer Branding ── */}
-                <div className="mt-24 pt-12 border-t border-gray-100 text-center animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+                <div className="mt-24 pt-12 border-t border-gray-100 text-center animate-fade-in-up" style={{ animationDelay: '500ms' }}>
                     <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.3em]">Curated with Love By AasanBuy</p>
                 </div>
 

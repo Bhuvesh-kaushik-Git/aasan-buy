@@ -28,6 +28,12 @@ const OrdersModule = ({ adminToken }) => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkStatus, setBulkStatus] = useState('Shipped');
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [allProducts, setAllProducts] = useState([]);
+
+  // Modals / Specific context
+  const [editingOrder, setEditingOrder] = useState(null); // For details edit
+  const [addingToOrder, setAddingToOrder] = useState(null); // For adding items
+  const [addingForm, setAddingForm] = useState({ productId: '', quantity: 1, selectedSize: '', selectedColor: null });
 
   useEffect(() => { fetchOrders(); }, [page, statusFilter, searchQuery]);
 
@@ -35,12 +41,19 @@ const OrdersModule = ({ adminToken }) => {
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/orders?page=${page}&limit=${PAGE_SIZE}&search=${searchQuery}&status=${statusFilter}`, {
-        headers: { 'Authorization': `Bearer ${adminToken}` }
+        headers: { 'Authorization': `Bearer ${adminToken}` },
+        credentials: 'include'
       });
       const data = await res.json();
       setOrders(data.orders || []);
       setPages(data.pages || 1);
       setTotal(data.totalItems || 0);
+
+      if (allProducts.length === 0) {
+        const pRes = await fetch(`${API_URL}/api/products?limit=1000`, { headers: { 'Authorization': `Bearer ${adminToken}` }, credentials: 'include' });
+        const pData = await pRes.json();
+        setAllProducts(pData.products || []);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -56,6 +69,7 @@ const OrdersModule = ({ adminToken }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${adminToken}`
         },
+        credentials: 'include',
         body: JSON.stringify({ status: newStatus }),
       });
       setOrders(prev => prev.map(o => o._id === id ? { ...o, orderStatus: newStatus } : o));
@@ -73,6 +87,7 @@ const OrdersModule = ({ adminToken }) => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${adminToken}`
           },
+          credentials: 'include',
           body: JSON.stringify({ status: bulkStatus }),
         }))
       );
@@ -80,6 +95,57 @@ const OrdersModule = ({ adminToken }) => {
       setSelectedIds([]);
     } catch (err) { console.error(err); }
     setBulkLoading(false);
+  };
+
+  const handleRollback = async (id) => {
+    if (!window.confirm("CRITICAL: This will return all items to stock and cancel the order permanently. Proceed?")) return;
+    try {
+      const res = await fetch(`${API_URL}/api/orders/${id}/rollback`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminToken}` },
+        credentials: 'include'
+      });
+      if (res.ok) {
+        alert("Inventory Rolled Back Successfully.");
+        fetchOrders();
+      }
+    } catch (e) { alert("Rollback failed"); }
+  };
+
+  const handleUpdateDetails = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${API_URL}/api/orders/${editingOrder._id}/details`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        credentials: 'include',
+        body: JSON.stringify({ customerDetails: editingOrder.customerDetails })
+      });
+      if (res.ok) {
+        setEditingOrder(null);
+        fetchOrders();
+      }
+    } catch (e) { alert("Update failed"); }
+  };
+
+  const handleAddItem = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${API_URL}/api/orders/${addingToOrder._id}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        credentials: 'include',
+        body: JSON.stringify(addingForm)
+      });
+      if (res.ok) {
+        setAddingToOrder(null);
+        setAddingForm({ productId: '', quantity: 1, selectedSize: '', selectedColor: null });
+        fetchOrders();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to add item");
+      }
+    } catch (e) { alert("Error adding item"); }
   };
 
   const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -214,30 +280,85 @@ const OrdersModule = ({ adminToken }) => {
                     </tr>
 
                     {expandedId === order._id && (
-                      <tr className="bg-gray-50/70">
-                        <td colSpan="7" className="px-8 py-6">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                              <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Shipping Details</h4>
-                              <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm text-[13px] text-gray-700 leading-relaxed">
-                                <p className="font-bold text-dark mb-1">{order.customerDetails?.fullName}</p>
-                                <p>{order.customerDetails?.email} · {order.customerDetails?.phone}</p>
-                                <p className="mt-2 text-gray-500">{order.customerDetails?.address}<br />{order.customerDetails?.city}, {order.customerDetails?.state} – {order.customerDetails?.pincode}</p>
+                      <tr className="bg-gray-50/70 border-b border-gray-100 shadow-inner">
+                        <td colSpan="7" className="px-8 py-10">
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                            
+                            {/* Stakeholder Details */}
+                            <div className="lg:col-span-1">
+                              <div className="flex justify-between items-center mb-4">
+                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Stakeholder Intelligence</h4>
+                                <button onClick={() => setEditingOrder(order)} className="text-[9px] font-black text-primary hover:underline uppercase">Edit Logistics</button>
+                              </div>
+                              <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-soft space-y-4">
+                                <div>
+                                   <p className="text-[15px] font-black text-dark">{order.customerDetails?.fullName}</p>
+                                   <p className="text-xs text-gray-400 font-bold">{order.customerDetails?.email} · {order.customerDetails?.phone}</p>
+                                </div>
+                                <div className="pt-4 border-t border-gray-50">
+                                   <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                                      {order.customerDetails?.address}<br />
+                                      {order.customerDetails?.city}, {order.customerDetails?.state}<br />
+                                      <span className="font-black text-dark">{order.customerDetails?.pincode}</span>
+                                   </p>
+                                </div>
                               </div>
                             </div>
-                            <div>
-                              <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Order Items</h4>
-                              <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-2 max-h-[200px] overflow-y-auto">
-                                {order.items?.map((item, idx) => (
-                                  <div key={idx} className="flex justify-between text-[13px] border-b border-gray-50 pb-2 last:border-0">
-                                    <div>
-                                      <p className="font-bold text-dark">{item.name}</p>
-                                      <p className="text-[11px] text-gray-500">Qty: {item.quantity} {item.selectedColor ? `· ${item.selectedColor.name}` : ''}</p>
-                                    </div>
-                                    <p className="font-bold text-dark">₹ {item.price * item.quantity}</p>
+
+                            {/* Inventory Flow */}
+                            <div className="lg:col-span-2">
+                               <div className="flex justify-between items-center mb-4">
+                                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Inventory Allocation</h4>
+                                  <button onClick={() => setAddingToOrder(order)} className="bg-primary/5 text-primary text-[9px] font-black px-4 py-2 rounded-xl hover:bg-primary hover:text-white transition-all">+ Add New Resource</button>
+                               </div>
+                               <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-soft">
+                                  <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {order.items?.map((item, idx) => (
+                                      <div key={idx} className="flex gap-4 items-center border-b border-gray-50 pb-4 last:border-0 last:pb-0">
+                                         <div className="w-16 h-16 bg-gray-50 rounded-2xl overflow-hidden shadow-sm shrink-0">
+                                            <img src={item.image} alt="" className="w-full h-full object-cover" />
+                                         </div>
+                                         <div className="flex-1">
+                                            <div className="flex justify-between">
+                                               <h5 className="text-[13px] font-black text-dark">{item.name}</h5>
+                                               <p className="text-[13px] font-black text-primary">₹ {item.price * item.quantity}</p>
+                                            </div>
+                                            <div className="flex items-center gap-3 mt-1.5">
+                                               <span className="text-[10px] bg-gray-50 px-2 py-0.5 rounded font-black text-gray-400 uppercase">QTY: {item.quantity}</span>
+                                               {item.selectedSize && <span className="text-[10px] bg-gray-50 px-2 py-0.5 rounded font-black text-gray-400 uppercase">SIZE: {item.selectedSize}</span>}
+                                               {item.selectedColor && <span className="w-4 h-4 rounded-full border border-gray-100" style={{ backgroundColor: item.selectedColor.hex }}></span>}
+                                               {item.giftWrap && (
+                                                 <span className="text-[10px] bg-rose-50 text-rose-500 px-2 py-0.5 rounded font-black uppercase tracking-tighter">🎁 {item.giftWrap.title} (+₹{item.giftWrap.price})</span>
+                                               )}
+                                            </div>
+                                         </div>
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
+
+                                  <div className="mt-8 pt-8 border-t border-gray-50 flex justify-between items-end">
+                                     <div className="flex gap-6">
+                                        <div>
+                                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Loyalty Influence</p>
+                                           <div className="flex gap-3">
+                                              <span className="bg-emerald-50 text-emerald-600 text-[10px] font-black px-3 py-1.5 rounded-lg border border-emerald-100">Earned: +{order.aasanCoinsEarned || 0}</span>
+                                              {order.aasanCoinsUsed > 0 && <span className="bg-secondary/5 text-secondary text-[10px] font-black px-3 py-1.5 rounded-lg border border-secondary/10">Spent: -{order.aasanCoinsUsed}</span>}
+                                           </div>
+                                        </div>
+                                     </div>
+                                     <div className="text-right">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Financial Settlement</p>
+                                        <p className="text-3xl font-black font-heading text-dark tracking-tighter">₹ {order.totalAmount.toLocaleString()}</p>
+                                     </div>
+                                  </div>
+                               </div>
+
+                               {/* Manual Overrides */}
+                               <div className="mt-8 flex justify-end gap-4">
+                                  {order.orderStatus !== 'Cancelled' && (
+                                    <button onClick={() => handleRollback(order._id)} className="bg-rose-50 text-rose-600 text-[10px] font-black px-8 py-4 rounded-2xl border border-rose-100 hover:bg-rose-500 hover:text-white transition-all shadow-xl shadow-rose-500/10">⚡ Atomic Rollback (Inventory Leak Fix)</button>
+                                  )}
+                               </div>
                             </div>
                           </div>
                         </td>
@@ -261,8 +382,55 @@ const OrdersModule = ({ adminToken }) => {
           <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:border-secondary hover:text-secondary disabled:opacity-30">Next →</button>
         </div>
       )}
+
+      {/* Edit Details Modal */}
+      {editingOrder && (
+         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-dark/60 backdrop-blur-md" onClick={() => setEditingOrder(null)} />
+            <form onSubmit={handleUpdateDetails} className="relative bg-white rounded-[40px] p-10 w-full max-w-xl shadow-premium animate-fade-in-up">
+               <h3 className="text-2xl font-black font-heading text-dark mb-8">Edit Logistics Protocol</h3>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <input placeholder="Full Name" value={editingOrder.customerDetails.fullName} onChange={e => setEditingOrder({...editingOrder, customerDetails: {...editingOrder.customerDetails, fullName: e.target.value}})} className="bg-gray-50 p-4 rounded-2xl text-sm font-bold border-0 focus:ring-4 focus:ring-primary/10 w-full" />
+                  <input placeholder="Phone" value={editingOrder.customerDetails.phone} onChange={e => setEditingOrder({...editingOrder, customerDetails: {...editingOrder.customerDetails, phone: e.target.value}})} className="bg-gray-50 p-4 rounded-2xl text-sm font-bold border-0 focus:ring-4 focus:ring-primary/10 w-full" />
+                  <div className="md:col-span-2">
+                    <textarea placeholder="Address" value={editingOrder.customerDetails.address} onChange={e => setEditingOrder({...editingOrder, customerDetails: {...editingOrder.customerDetails, address: e.target.value}})} className="bg-gray-50 p-4 rounded-2xl text-sm font-bold border-0 focus:ring-4 focus:ring-primary/10 w-full resize-none" rows={3} />
+                  </div>
+                  <input placeholder="City" value={editingOrder.customerDetails.city} onChange={e => setEditingOrder({...editingOrder, customerDetails: {...editingOrder.customerDetails, city: e.target.value}})} className="bg-gray-50 p-4 rounded-2xl text-sm font-bold border-0 focus:ring-4 focus:ring-primary/10 w-full" />
+                  <input placeholder="Pincode" value={editingOrder.customerDetails.pincode} onChange={e => setEditingOrder({...editingOrder, customerDetails: {...editingOrder.customerDetails, pincode: e.target.value}})} className="bg-gray-50 p-4 rounded-2xl text-sm font-bold border-0 focus:ring-4 focus:ring-primary/10 w-full" />
+               </div>
+               <div className="flex gap-4">
+                  <button type="button" onClick={() => setEditingOrder(null)} className="flex-1 py-4 font-black uppercase tracking-widest text-[11px] text-gray-400 bg-gray-50 rounded-2xl">Cancel</button>
+                  <button type="submit" className="flex-[2] py-4 font-black uppercase tracking-widest text-[11px] text-white bg-primary rounded-2xl shadow-xl shadow-primary/20">Commit Changes</button>
+               </div>
+            </form>
+         </div>
+      )}
+
+      {/* Add Items Modal */}
+      {addingToOrder && (
+         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-dark/60 backdrop-blur-md" onClick={() => setAddingToOrder(null)} />
+           <form onSubmit={handleAddItem} className="relative bg-white rounded-[40px] p-10 w-full max-w-xl shadow-premium animate-fade-in-up">
+              <h3 className="text-2xl font-black font-heading text-dark mb-8">Resource Allocation</h3>
+              <div className="space-y-6 mb-8">
+                 <select required value={addingForm.productId} onChange={e => setAddingForm({...addingForm, productId: e.target.value})} className="w-full bg-gray-50 p-4 rounded-2xl text-sm font-bold border-0 focus:ring-4 focus:ring-primary/10 appearance-none">
+                    <option value="">Select Resource...</option>
+                    {allProducts.map(p => <option key={p._id} value={p._id}>{p.name} (₹{p.price})</option>)}
+                 </select>
+                 <div className="grid grid-cols-2 gap-6">
+                    <input type="number" min="1" value={addingForm.quantity} onChange={e => setAddingForm({...addingForm, quantity: parseInt(e.target.value)})} className="bg-gray-50 p-4 rounded-2xl text-sm font-bold border-0 focus:ring-4 focus:ring-primary/10 w-full" placeholder="Quantity" />
+                    <input type="text" value={addingForm.selectedSize} onChange={e => setAddingForm({...addingForm, selectedSize: e.target.value})} className="bg-gray-50 p-4 rounded-2xl text-sm font-bold border-0 focus:ring-4 focus:ring-primary/10 w-full" placeholder="Size (Optional)" />
+                 </div>
+              </div>
+              <div className="flex gap-4">
+                 <button type="button" onClick={() => setAddingToOrder(null)} className="flex-1 py-4 font-black uppercase tracking-widest text-[11px] text-gray-400 bg-gray-50 rounded-2xl">Abort</button>
+                 <button type="submit" className="flex-[2] py-4 font-black uppercase tracking-widest text-[11px] text-white bg-primary rounded-2xl shadow-xl shadow-primary/20">Inject to Order</button>
+              </div>
+           </form>
+         </div>
+      )}
     </div>
   );
-};
+}
 
 export default OrdersModule;

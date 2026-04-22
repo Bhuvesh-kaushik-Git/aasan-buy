@@ -43,6 +43,32 @@ const UsersModule = ({ adminToken }) => {
     }
   };
 
+  const updateCoins = async (id, currentCoins) => {
+    const newVal = window.prompt("Set AasanCoins for this user:", currentCoins);
+    if (newVal === null) return;
+    const coins = parseInt(newVal);
+    if (isNaN(coins) || coins < 0) return alert("Invalid amount. Coins must be a non-negative number.");
+
+    try {
+      const res = await fetch(`${API_URL}/api/users/${id}/update-coins`, {
+        method: 'PUT',
+        headers: { 
+           'Authorization': `Bearer ${adminToken}`,
+           'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ coins })
+      });
+      if (res.ok) {
+        setUsers(users.map(u => u._id === id ? { ...u, aasanCoins: coins } : u));
+      } else {
+        const err = await res.json();
+        alert(err.error || "Update failed");
+      }
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const deleteUser = async (id) => {
     if (!window.confirm("Danger: Deleting a user will also orphan their order history. Proceed?")) return;
     try {
@@ -79,6 +105,7 @@ const UsersModule = ({ adminToken }) => {
             <tr className="bg-gray-50/50 border-b border-gray-100">
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Customer</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Joined</th>
+              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Coins</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Phone</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Account State</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Actions</th>
@@ -99,6 +126,18 @@ const UsersModule = ({ adminToken }) => {
                    </div>
                 </td>
                 <td className="px-8 py-5 text-[11px] font-bold text-gray-500 uppercase tracking-widest">{new Date(u.createdAt).toLocaleDateString()}</td>
+                <td className="px-8 py-5">
+                   <div className="flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-lg bg-secondary/5 text-secondary flex items-center justify-center font-black text-[12px]">🪙</span>
+                      <span className="font-black text-dark text-sm">{u.aasanCoins || 0}</span>
+                      <button 
+                        onClick={() => updateCoins(u._id, u.aasanCoins || 0)}
+                        className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-primary transition-all"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                      </button>
+                   </div>
+                </td>
                 <td className="px-8 py-5 text-[12px] font-medium text-gray-500">{u.phone || 'N/A'}</td>
                 <td className="px-8 py-5">
                    <button 

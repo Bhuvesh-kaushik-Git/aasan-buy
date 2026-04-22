@@ -1,4 +1,5 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback, useRef } from 'react';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
@@ -18,12 +19,62 @@ export const CartProvider = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(true);
   const [isValidatingStock, setIsValidatingStock] = useState(false);
 
+  const auth = useAuth() || {};
+  const { user } = auth;
+  const syncTimeoutRef = useRef(null);
+
   // Save to localStorage
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem('aasanCart', JSON.stringify(cart));
     }
   }, [cart, isInitialized]);
+
+  // ── Sync with DB ─────────────────────────────────────────────────────────────
+  
+  // 1. Fetch & Merge on Login
+  useEffect(() => {
+    if (user && isInitialized) {
+      const fetchRemoteCart = async () => {
+        try {
+          const res = await fetch(`${API_URL}/api/auth/cart`, { credentials: 'include' });
+          if (res.ok) {
+            const remoteCart = await res.json();
+            if (remoteCart.length > 0) {
+              // Simple Merge Logic: remote takes precedence for now, or concat
+              setCart(prev => {
+                const combined = [...prev];
+                remoteCart.forEach(ri => {
+                   const exists = combined.find(i => i.productId === ri.productId && i.selectedColor?.name === ri.selectedColor?.name && i.selectedSize === ri.selectedSize);
+                   if (!exists) combined.push(ri);
+                });
+                return combined;
+              });
+            }
+          }
+        } catch (e) { console.error("Cart fetch failed", e); }
+      };
+      fetchRemoteCart();
+    }
+  }, [user, isInitialized]);
+
+  // 2. Push to DB on Changes (Debounced)
+  useEffect(() => {
+    if (user && isInitialized) {
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+      syncTimeoutRef.current = setTimeout(async () => {
+        try {
+          await fetch(`${API_URL}/api/auth/cart`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cart }),
+            credentials: 'include'
+          });
+        } catch (e) { console.error("Cart sync failed", e); }
+      }, 2000); // 2 second debounce
+    }
+    return () => { if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current); };
+  }, [cart, user, isInitialized]);
 
   // ── Active Stock Validation ───────────────────────────────────────────────
   // Optimized: Uses a single bulk endpoint to check stock for all items
@@ -54,12 +105,22 @@ export const CartProvider = ({ children }) => {
     setIsValidatingStock(false);
   }, [cart]);
 
-  const addToCart = (product, quantity = 1, selectedColor = null, selectedSize = null) => {
+  const updateQuantity = (index, newQuantity) => {
+    if (newQuantity < 1) return removeFromCart(index);
+    setCart(prev => {
+      const newCart = [...prev];
+      newCart[index] = { ...newCart[index], quantity: newQuantity };
+      return newCart;
+    });
+  };
+
+  const addToCart = (product, quantity = 1, selectedColor = null, selectedSize = null, giftWrap = null) => {
     setCart(prev => {
       const existingIdx = prev.findIndex(item =>
         item.productId === product._id &&
         item.selectedColor?.name === selectedColor?.name &&
-        item.selectedSize === selectedSize
+        item.selectedSize === selectedSize &&
+        item.giftWrap?.id === giftWrap?.id
       );
       if (existingIdx >= 0) {
         const newCart = [...prev];
@@ -74,39 +135,19 @@ export const CartProvider = ({ children }) => {
         quantity,
         selectedColor,
         selectedSize,
+        giftWrap
       }];
-    });
-  };
-
-  const removeFromCart = (indexToRemove) => {
-    setCart(prev => {
-      const removed = prev[indexToRemove];
-      const newCart = prev.filter((_, idx) => idx !== indexToRemove);
-      // Clear any warning for this product
-      if (removed?.productId) {
-        setStockWarnings(prev => {
-          const w = { ...prev };
-          delete w[removed.productId];
-          return w;
-        });
-      }
-      return newCart;
-    });
-  };
-
-  const updateQuantity = (index, newQuantity) => {
-    if (newQuantity < 1) return removeFromCart(index);
-    setCart(prev => {
-      const newCart = [...prev];
-      newCart[index] = { ...newCart[index], quantity: newQuantity };
-      return newCart;
     });
   };
 
   const clearCart = () => { setCart([]); setStockWarnings({}); };
 
   const getCartTotal = (discount = 0) => {
-    const raw = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+    const raw = cart.reduce((total, item) => {
+      const itemBase = item.price * item.quantity;
+      const wrapPrice = (item.giftWrap?.price || 0) * item.quantity;
+      return total + itemBase + wrapPrice;
+    }, 0);
     return Math.max(0, raw - discount);
   };
 

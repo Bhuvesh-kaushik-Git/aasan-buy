@@ -12,8 +12,13 @@ router.get('/', async (req, res) => {
     const skip = (page - 1) * limit;
     const search = req.query.search || '';
     const category = req.query.category || '';
+    const ids = req.query.ids ? req.query.ids.split(',') : [];
+    const sort = req.query.sort || 'newest';
 
     const query = {};
+    if (ids.length > 0) {
+      query._id = { $in: ids };
+    }
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -25,8 +30,11 @@ router.get('/', async (req, res) => {
       query.categories = { $regex: category, $options: 'i' };
     }
 
+    let sortQuery = { createdAt: -1 };
+    if (sort === 'trending') sortQuery = { sold: -1 };
+
     const total = await Product.countDocuments(query);
-    const products = await Product.find(query).skip(skip).limit(limit).sort({ createdAt: -1 });
+    const products = await Product.find(query).skip(skip).limit(limit).sort(sortQuery);
     res.json({ products, total, page, pages: Math.ceil(total / limit) });
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import { useWishlist } from '../context/WishlistContext';
 
 const API_URL = import.meta.env.VITE_API_URL;
 const LIMIT = 20;
 
 const Products = () => {
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -78,7 +79,14 @@ const Products = () => {
                 className="group flex flex-col bg-white rounded-[32px] shadow-soft hover:shadow-premium transition-all duration-500 overflow-hidden border border-gray-100"
               >
                 <div className="w-full aspect-square relative bg-[#F8F9FB] overflow-hidden">
-                  <img src={p.images?.[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
+                  <img src={p.images?.[0]} alt={p.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
+                  
+                  <button 
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(p); }}
+                    className={`absolute top-4 right-4 w-9 h-9 rounded-xl flex items-center justify-center z-10 transition-all border shadow-lg ${isInWishlist(p._id) ? 'bg-white border-rose-100 text-rose-500' : 'bg-white/30 backdrop-blur-md border-white/20 text-white hover:bg-white hover:text-rose-500'}`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill={isInWishlist(p._id) ? "currentColor" : "none"} viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
+                  </button>
                   {p.stock === 0 && (
                     <div className="absolute inset-0 bg-dark/40 backdrop-blur-[2px] flex items-center justify-center">
                       <span className="bg-white text-dark text-[9px] font-black px-4 py-1.5 rounded-xl tracking-widest uppercase">Sold Out</span>

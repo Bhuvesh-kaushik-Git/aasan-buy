@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProductSkeleton, BannerSkeleton } from '../components/Skeleton';
+import { useWishlist } from '../context/WishlistContext';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -9,6 +10,13 @@ const API_URL = import.meta.env.VITE_API_URL;
 const VerticalProductCard = ({ title, price, mrp, image, id, tagLabel, tagColor, rating = 4.5 }) => {
   const displayMrp = mrp || (price * 1.15); // Better fallback logic
   const discount = Math.round(((displayMrp - price) / displayMrp) * 100);
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  
+  const handleWishlist = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist({ _id: id, name: title, price, images: [image] });
+  };
   
   return (
     <a 
@@ -19,6 +27,7 @@ const VerticalProductCard = ({ title, price, mrp, image, id, tagLabel, tagColor,
         <img 
           src={image} 
           alt={title} 
+          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]" 
         />
         {tagLabel && (
@@ -29,6 +38,12 @@ const VerticalProductCard = ({ title, price, mrp, image, id, tagLabel, tagColor,
             {tagLabel}
           </div>
         )}
+        <button 
+          onClick={handleWishlist}
+          className={`absolute top-4 right-4 w-9 h-9 rounded-xl flex items-center justify-center z-10 transition-all border shadow-lg ${isInWishlist(id) ? 'bg-white border-rose-100 text-rose-500' : 'bg-white/30 backdrop-blur-md border-white/20 text-white hover:bg-white hover:text-rose-500'}`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill={isInWishlist(id) ? "currentColor" : "none"} viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
+        </button>
         <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
             <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl text-[12px] font-black text-primary shadow-2xl translate-y-6 group-hover:translate-y-0 transition-transform duration-700">
                 View Collection
@@ -81,6 +96,7 @@ const OccasionCard = ({ label, imageUrl, redirectUrl }) => (
         <img
           src={imageUrl}
           alt={label}
+          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
         />
       ) : (
@@ -227,7 +243,7 @@ const Home = ({ settings }) => {
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-12">
               {section.occasions?.map((occ, oIdx) => (
                 <div key={oIdx} onClick={() => navigate(`/collection/${occ._id}`)} className="group relative aspect-[4/5] overflow-hidden rounded-[40px] cursor-pointer shadow-premium hover:shadow-2xl transition-all duration-700">
-                  <img src={occ.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={occ.label} />
+                  <img src={occ.imageUrl} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={occ.label} />
                   <div className="absolute inset-0 bg-gradient-to-t from-dark/90 via-dark/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
                   <div className="absolute bottom-8 left-8 right-8">
                      <h3 className="text-white text-2xl font-black font-heading mb-2 transform group-hover:-translate-y-2 transition-transform duration-500">{occ.label}</h3>

@@ -1,48 +1,78 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const Footer = () => {
+const Footer = ({ settings }) => {
+  const footerStatus = settings?.footer || { sections: [], socialLinks: {}, copyright: '© 2026 AasanBuy. Excellence Curated.' };
+  
   return (
     <footer className="bg-dark text-white pt-20 pb-12 border-t border-white/5">
       <div className="max-w-[1400px] mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
         {/* Brand & Mission */}
         <div className="space-y-8">
           <div className="flex flex-col">
-            <span className="text-3xl font-black text-white leading-none tracking-tight font-heading">
-                AASAN<span className="text-secondary">BUY</span>
-            </span>
+            {settings?.logoUrl ? (
+                <img src={settings.logoUrl} alt="AasanBuy" className="h-10 w-auto object-contain" />
+            ) : (
+                <span className="text-3xl font-black text-white leading-none tracking-tight font-heading">
+                    AASAN<span className="text-secondary">BUY</span>
+                </span>
+            )}
             <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mt-2">Curated Luxury Essentials</span>
           </div>
           <p className="text-white/50 text-sm leading-relaxed max-w-xs">
             Transforming the way you shop for premium essentials. We bring curation and quality together, delivered at the speed of thought.
           </p>
           <div className="flex gap-4">
-            {['Instagram', 'Twitter', 'Facebook'].map((social) => (
-              <a key={social} href="#" className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary transition-all group">
-                 <span className="text-[10px] font-black uppercase tracking-widest text-white group-hover:text-white">{social[0]}</span>
-              </a>
-            ))}
+             {Object.entries(footerStatus.socialLinks || {}).map(([platform, url]) => (
+                url && (
+                    <a key={platform} href={url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary transition-all group">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white group-hover:text-white">{platform[0]}</span>
+                    </a>
+                )
+             ))}
+             {!Object.values(footerStatus.socialLinks || {}).some(Boolean) && (
+                ['Instagram', 'Twitter', 'Facebook'].map((social) => (
+                    <a key={social} href="#" className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary transition-all group">
+                       <span className="text-[10px] font-black uppercase tracking-widest text-white group-hover:text-white">{social[0]}</span>
+                    </a>
+                ))
+             )}
           </div>
         </div>
 
         {/* Navigation Hub */}
         <div className="grid grid-cols-2 lg:col-span-2 gap-8">
-            <div>
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 mb-8 font-heading">Collections</h3>
-              <ul className="space-y-4 text-[13px] font-bold text-white/60">
-                {['Curated Flowers', 'Luxe Cakes', 'Personalised Joy', 'Combos'].map((link) => (
-                  <li key={link}><Link to={`/products`} className="hover:text-secondary transition-colors block">{link}</Link></li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 mb-8 font-heading">Trust & Legal</h3>
-              <ul className="space-y-4 text-[13px] font-bold text-white/60">
-                {['Our Story', 'Terms of Service', 'Privacy Policy', 'Shipping Policy', 'Contact Us'].map((link) => (
-                  <li key={link}><Link to={`/${link.toLowerCase().replace(/ /g, '-')}`} className="hover:text-secondary transition-colors block">{link}</Link></li>
-                ))}
-              </ul>
-            </div>
+            {footerStatus.sections && footerStatus.sections.length > 0 ? (
+                footerStatus.sections.map((sec, idx) => (
+                    <div key={idx}>
+                       <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 mb-8 font-heading">{sec.title}</h3>
+                       <ul className="space-y-4 text-[13px] font-bold text-white/60">
+                         {sec.links?.map((link, lIdx) => (
+                           <li key={lIdx}><Link to={link.url} className="hover:text-secondary transition-colors block">{link.label}</Link></li>
+                         ))}
+                       </ul>
+                    </div>
+                ))
+            ) : (
+                <>
+                    <div>
+                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 mb-8 font-heading">Collections</h3>
+                      <ul className="space-y-4 text-[13px] font-bold text-white/60">
+                        {['Curated Flowers', 'Luxe Cakes', 'Personalised Joy', 'Combos'].map((link) => (
+                          <li key={link}><Link to={`/products`} className="hover:text-secondary transition-colors block">{link}</Link></li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 mb-8 font-heading">Trust & Legal</h3>
+                      <ul className="space-y-4 text-[13px] font-bold text-white/60">
+                        {['Our Story', 'Terms of Service', 'Privacy Policy', 'Shipping Policy', 'Contact Us'].map((link) => (
+                          <li key={link}><Link to={`/${link.toLowerCase().replace(/ /g, '-')}`} className="hover:text-secondary transition-colors block">{link}</Link></li>
+                        ))}
+                      </ul>
+                    </div>
+                </>
+            )}
         </div>
 
         {/* Retention / Newsletter */}
@@ -72,7 +102,7 @@ const Footer = () => {
         </div>
         
         <div className="flex flex-col items-center lg:items-end gap-2">
-            <p className="text-white/30 text-[11px] font-bold uppercase tracking-widest">© 2026 AasanBuy India. Excellence Curated.</p>
+            <p className="text-white/30 text-[11px] font-bold uppercase tracking-widest">{footerStatus.copyright || '© 2026 AasanBuy India. Excellence Curated.'}</p>
             <div className="flex gap-4 text-[10px] font-bold text-white/20 uppercase tracking-widest">
                 <a href="#" className="hover:text-white transition-colors">Privacy</a>
                 <a href="#" className="hover:text-white transition-colors">Sitemap</a>

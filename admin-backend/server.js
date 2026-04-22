@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
+app.use(cookieParser());
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
@@ -28,8 +30,10 @@ app.use('/api/products',   require('./routes/productRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/orders',     require('./routes/orderRoutes'));
 app.use('/api/reviews',    require('./routes/reviewRoutes'));
-app.use('/api/coupons',    require('./routes/couponRoutes')); // New
-app.use('/api/users',      require('./routes/userRoutes'));   // New
+app.use('/api/coupons',    require('./routes/couponRoutes')); 
+app.use('/api/users',      require('./routes/userRoutes'));   
+app.use('/api/ai',         require('./routes/aiRoutes'));     
+app.use('/api/giftwraps',  require('./routes/giftWrapRoutes'));
 
 // Global Error Handler
 app.use((err, req, res, next) => {

@@ -3,6 +3,7 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import * as XLSX from 'xlsx';
 import TagInput from './components/TagInput';
+import CurationModal from './components/CurationModal';
 
 export default function ProductsModule({ adminToken }) {
   const [products, setProducts] = useState([]);
@@ -12,6 +13,7 @@ export default function ProductsModule({ adminToken }) {
   const [search, setSearch] = useState('');
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const [dbCategories, setDbCategories] = useState([]);
   useEffect(() => {
@@ -140,6 +142,40 @@ export default function ProductsModule({ adminToken }) {
     reader.readAsBinaryString(file);
   };
 
+  const handleAISuggest = async () => {
+    if (!editingProduct.name) return alert("Please enter a product name first.");
+    setAiLoading(true);
+    try {
+      const res = await fetch('http://localhost:5001/api/ai/suggest', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({
+          productId: editingProduct._id || null,
+          currentName: editingProduct.name,
+          currentDescription: editingProduct.description || '',
+          currentCategories: editingProduct.categories || []
+        })
+      });
+      const data = await res.json();
+      if (data.suggestedIds && data.suggestedIds.length > 0) {
+        setEditingProduct(prev => ({
+          ...prev,
+          aiSuggestedProducts: [...new Set([...(prev.aiSuggestedProducts || []), ...data.suggestedIds])]
+        }));
+      } else {
+        alert("AI couldn't find relevant matches. Try adding more description.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("AI Service Error");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const handleSaveProduct = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -178,6 +214,34 @@ export default function ProductsModule({ adminToken }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const [curationModal, setCurationModal] = useState({ open: false, rowIdx: null, initialIds: [], seedProduct: null });
+
+  const handleOpenCuration = (rIdx) => {
+    const row = (editingProduct.customRecommendationRows || [])[rIdx];
+    const seed = row.seedProduct ? products.find(p => p._id === (row.seedProduct._id || row.seedProduct)) : null;
+    setCurationModal({ open: true, rowIdx: rIdx, initialIds: row.items || [], seedProduct: seed });
+  };
+
+  const handleSaveCuration = (ids) => {
+    const updated = [...(editingProduct.customRecommendationRows || [])];
+    updated[curationModal.rowIdx].items = ids;
+    setEditingProduct(p => ({ ...p, customRecommendationRows: updated }));
+    setCurationModal({ open: false, rowIdx: null, initialIds: [], seedProduct: null });
+  };
+
+  const handleAddCustomRow = () => {
+    setEditingProduct(p => ({
+      ...p,
+      customRecommendationRows: [...(p.customRecommendationRows || []), { rowTitle: 'Custom Selection', type: 'manual', seedProduct: '', items: [] }]
+    }));
+  };
+
+  const handleRemoveCustomRow = (idx) => {
+    const updated = [...(editingProduct.customRecommendationRows || [])];
+    updated.splice(idx, 1);
+    setEditingProduct(p => ({ ...p, customRecommendationRows: updated }));
   };
 
   // --- Render Product Form ---
@@ -278,8 +342,102 @@ export default function ProductsModule({ adminToken }) {
                     {(!editingProduct.colors || editingProduct.colors.length === 0) && <p className="text-xs text-gray-400 italic">No colors configured.</p>}
                  </div>
               </div>
+              <div className="col-span-2 space-y-4">
+                 <div className="flex justify-between items-center bg-primary/5 p-4 rounded-xl border border-primary/10">
+                    <div>
+                       <label className="text-xs font-black text-primary uppercase tracking-widest block mb-1">AI Smart Suggestions</label>
+                       <p className="text-[10px] text-gray-500">Let AI analyze inventory and suggest similar products for the detail page.</p>
+                    </div>
+                    <button 
+                       type="button" 
+                       onClick={handleAISuggest}
+                       disabled={aiLoading}
+                       className="bg-primary text-white text-[11px] font-bold px-4 py-2 rounded-lg shadow-sm hover:brightness-110 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2"
+                    >
+                       {aiLoading ? (
+                          <>
+                             <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                             AI is analyzing...
+                          </>
+                       ) : '✨ Generate Suggestions'}
+                    </button>
+                 </div>
+                 
+                 {editingProduct.aiSuggestedProducts && editingProduct.aiSuggestedProducts.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                       {editingProduct.aiSuggestedProducts.map((id, idx) => (
+                          <div key={idx} className="bg-gray-50 border border-gray-200 p-2 rounded-lg flex items-center justify-between group">
+                             <span className="text-[10px] font-mono text-gray-400 truncate max-w-[120px]">{id}</span>
+                             <button type="button" onClick={() => setEditingProduct(p => ({...p, aiSuggestedProducts: p.aiSuggestedProducts.filter((_, i) => i !== idx)}))} className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                          </div>
+                       ))}
+                    </div>
+                 )}
+              </div>
+
+              {/* Custom Recommendation Rows Overrides */}
+              <div className="col-span-2 space-y-6 pt-6 border-t border-gray-100">
+                  <div className="flex justify-between items-center bg-secondary/5 p-6 rounded-[32px] border border-secondary/10">
+                     <div className="space-y-1">
+                        <h3 className="text-sm font-black text-secondary uppercase tracking-[0.2em]">Product-Specific Curation</h3>
+                        <p className="text-[10px] text-gray-500 font-medium">Add unique recommendation rows for this product. These will override global settings.</p>
+                     </div>
+                     <button type="button" onClick={handleAddCustomRow} className="bg-secondary text-white text-[10px] font-black uppercase tracking-[0.2em] px-6 py-3 rounded-2xl shadow-lg hover:shadow-secondary/20 transition-all">+ Add Custom Row</button>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6">
+                     {(editingProduct.customRecommendationRows || []).map((row, rIdx) => (
+                        <div key={rIdx} className="p-6 bg-gray-50/50 rounded-[32px] border border-gray-100 flex flex-col gap-6 relative group">
+                           <button type="button" onClick={() => handleRemoveCustomRow(rIdx)} className="absolute -top-1 -right-1 bg-red-500 text-white w-6 h-6 rounded-full text-[10px] opacity-0 group-hover:opacity-100 shadow-lg">✕</button>
+                           
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                 <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Row Title</label>
+                                 <input type="text" value={row.rowTitle} onChange={e => { const u = [...editingProduct.customRecommendationRows]; u[rIdx].rowTitle = e.target.value; setEditingProduct(p => ({...p, customRecommendationRows: u})); }} className="w-full bg-white px-4 py-2.5 rounded-xl font-bold text-xs border-0 outline-none" placeholder="e.g. You might also love" />
+                              </div>
+                              <div className="space-y-2">
+                                 <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Intelligence Type</label>
+                                 <select value={row.type} onChange={e => { const u = [...editingProduct.customRecommendationRows]; u[rIdx].type = e.target.value; setEditingProduct(p => ({...p, customRecommendationRows: u})); }} className="w-full bg-white px-4 py-2.5 rounded-xl font-bold text-[11px] border-0 outline-none">
+                                    <option value="manual">Manual Selection</option>
+                                    <option value="ai">AI Dynamic Match</option>
+                                    <option value="category">Category Similar</option>
+                                    <option value="trending">Store Trending</option>
+                                 </select>
+                              </div>
+                           </div>
+
+                           <div className="flex items-center gap-4">
+                              <div className="flex-1 space-y-2">
+                                 <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">AI Context Seed</label>
+                                 <select 
+                                    value={row.seedProduct || ''} 
+                                    onChange={e => { const u = [...editingProduct.customRecommendationRows]; u[rIdx].seedProduct = e.target.value; setEditingProduct(p => ({...p, customRecommendationRows: u})); }} 
+                                    className="w-full bg-white px-4 py-2.5 rounded-xl font-bold text-[11px] border-0 outline-none"
+                                 >
+                                    <option value="">No Context</option>
+                                    {products.map(p => (
+                                       <option key={p._id} value={p._id}>{p.name}</option>
+                                    ))}
+                                 </select>
+                              </div>
+                              <div className="shrink-0 pt-4">
+                                 <button 
+                                    type="button"
+                                    onClick={() => handleOpenCuration(rIdx)}
+                                    className="bg-primary text-white font-black text-[10px] uppercase tracking-[0.2em] px-6 py-4 rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center gap-2"
+                                 >
+                                    <span>✨</span> Curate Row 
+                                    <span className="bg-white/20 px-2 py-0.5 rounded-lg text-[8px]">{(row.items || []).length}</span>
+                                 </button>
+                              </div>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+              </div>
+
               <div className="col-span-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-2">Description</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-2">Detailed Description</label>
                 <div className="bg-white border-gray-200 rounded-lg overflow-hidden">
                     <ReactQuill 
                        theme="snow" 
@@ -297,6 +455,16 @@ export default function ProductsModule({ adminToken }) {
               </button>
            </div>
         </form>
+
+        <CurationModal 
+           isOpen={curationModal.open}
+           onClose={() => setCurationModal({ ...curationModal, open: false })}
+           onSave={handleSaveCuration}
+           allProducts={products}
+           seedProduct={curationModal.seedProduct}
+           initialIds={curationModal.initialIds}
+           adminToken={adminToken}
+        />
       </div>
     );
   }

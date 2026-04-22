@@ -51,15 +51,25 @@ router.put('/:id/toggle-status', async (req, res) => {
   }
 });
 
-// @desc    Delete user
-router.delete('/:id', async (req, res) => {
+// @desc    Update user coins
+router.put('/:id/update-coins', async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const { coins } = req.body;
+    if (typeof coins !== 'number' || coins < 0) {
+      return res.status(400).json({ error: 'Invalid coins value. Must be a non-negative number.' });
+    }
+
+    const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json({ message: 'User deleted' });
+    
+    user.aasanCoins = coins;
+    await user.save();
+    res.json(user);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
+
+// @desc    Delete user
 
 module.exports = router;

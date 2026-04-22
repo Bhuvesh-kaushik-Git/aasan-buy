@@ -35,16 +35,19 @@ router.put('/', protect, adminOnly, async (req, res) => {
     if (settings) {
       settings.heroBanners = req.body.heroBanners || settings.heroBanners;
       settings.logoUrl = req.body.logoUrl || settings.logoUrl;
-      settings.footerText = req.body.footerText || settings.footerText;
       settings.navMenu = req.body.navMenu || settings.navMenu;
+      settings.footer  = req.body.footer || settings.footer;
+      settings.productDetailsRows = req.body.productDetailsRows || settings.productDetailsRows;
       settings.occasionSections = req.body.occasionSections !== undefined ? req.body.occasionSections : settings.occasionSections;
       settings.homeProductTabs = req.body.homeProductTabs !== undefined ? req.body.homeProductTabs : settings.homeProductTabs;
       
-      // Force Mongoose to recognize changes in nested arrays
+      // Force Mongoose to recognize changes in nested arrays/objects
       settings.markModified('occasionSections');
       settings.markModified('homeProductTabs');
       settings.markModified('navMenu');
       settings.markModified('heroBanners');
+      settings.markModified('footer');
+      settings.markModified('productDetailsRows');
 
       const updatedSettings = await settings.save();
       res.json(updatedSettings);
