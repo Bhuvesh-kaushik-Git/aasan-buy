@@ -12,7 +12,8 @@ export const WishlistProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const auth = useAuth() || {};
   const { user } = auth;
-  const { showToast } = useToast();
+  const toast = useToast() || {};
+  const { showToast } = toast;
 
   // Load from local storage for guests, or fetch from DB for logged-in users
   useEffect(() => {

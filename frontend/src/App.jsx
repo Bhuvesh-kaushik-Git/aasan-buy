@@ -205,15 +205,15 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <WishlistProvider>
-        <CartProvider>
-          <ToastProvider>
+      <ToastProvider>
+        <WishlistProvider>
+          <CartProvider>
             <Router>
               <AppContent />
             </Router>
-          </ToastProvider>
-        </CartProvider>
-      </WishlistProvider>
+          </CartProvider>
+        </WishlistProvider>
+      </ToastProvider>
     </AuthProvider>
   );
 }
