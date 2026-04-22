@@ -1,0 +1,12 @@
+extends baseEmail
+
+block content
+  h2 Order Status Update
+  p
+    | Hi 
+    strong #{name}
+    | ,
+  p(style='font-size: 16px;') #{statusMessage}
+  p
+    strong Order ID: 
+    code ##{orderId}
