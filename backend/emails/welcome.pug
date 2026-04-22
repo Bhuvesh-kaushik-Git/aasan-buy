@@ -1,0 +1,16 @@
+extends baseEmail
+
+block content
+  div(style='text-align: center;')
+    h2 Welcome to the Family! 🎉
+    p
+      | Hi 
+      strong #{name}
+      | ,
+    p We are thrilled to have you here! At AasanBuy, we are committed to providing you with the best shopping experience. Uncover top-tier products with amazing deals, carefully curated just for you.
+    div(style='margin: 30px 0;')
+      a.btn(href='https://aasanbuy.com') Start Shopping Now
+    p(style='font-size: 14px; color: #888;')
+      | As a special thank you, use promo code 
+      strong NEWUSER10
+      |  at checkout to get 10% off your first order!
