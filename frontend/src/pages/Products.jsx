@@ -1,7 +1,9 @@
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useWishlist } from '../context/WishlistContext';
+import OptimizedImage from '../components/OptimizedImage';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const LIMIT = 20;
 
 const Products = () => {
@@ -79,7 +81,11 @@ const Products = () => {
                 className="group flex flex-col bg-white rounded-[32px] shadow-soft hover:shadow-premium transition-all duration-500 overflow-hidden border border-gray-100"
               >
                 <div className="w-full aspect-square relative bg-[#F8F9FB] overflow-hidden">
-                  <img src={p.images?.[0]} alt={p.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
+                  <OptimizedImage
+                    src={p.images?.[0]} 
+                    alt={p.name} 
+                    className="w-full h-full group-hover:scale-110 transition-transform duration-700 ease-out" 
+                  />
                   
                   <button 
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(p); }}

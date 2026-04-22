@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import OptimizedImage from '../components/OptimizedImage';
 
 const statusColors = {
   Processing: 'bg-yellow-100 text-yellow-700',
@@ -32,10 +33,10 @@ const Profile = () => {
   const fetchOrders = async () => {
     try {
       const res = await fetch(`${API_URL}/api/orders/my-orders`, {
-        headers: { 'Authorization': `Bearer ${user.token}` }
+        credentials: 'include'
       });
       const data = await res.json();
-      setOrders(data);
+      setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching orders:', err);
     } finally {
@@ -46,7 +47,7 @@ const Profile = () => {
   const fetchReferrals = async () => {
     try {
       const res = await fetch(`${API_URL}/api/auth/referrals`, {
-        headers: { 'Authorization': `Bearer ${user.token}` }
+        credentials: 'include'
       });
       const data = await res.json();
       if (Array.isArray(data)) setReferrals(data);
@@ -60,11 +61,9 @@ const Profile = () => {
     try {
       const res = await fetch(`${API_URL}/api/auth/addresses`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}` 
-        },
-        body: JSON.stringify(newAddress)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newAddress),
+        credentials: 'include'
       });
       const updatedAddresses = await res.json();
       setAddresses(updatedAddresses);
@@ -80,7 +79,7 @@ const Profile = () => {
     try {
       const res = await fetch(`${API_URL}/api/auth/addresses/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${user.token}` }
+        credentials: 'include'
       });
       const updatedAddresses = await res.json();
       setAddresses(updatedAddresses);
@@ -106,7 +105,12 @@ const Profile = () => {
           </div>
           <div className="space-y-1">
              <span className="text-[11px] font-black text-secondary uppercase tracking-[0.3em]">Customer Dashboard</span>
-             <h1 className="text-3xl font-black text-dark tracking-tighter">{user.name}</h1>
+             <h1 className="text-3xl font-black text-dark tracking-tighter flex items-center gap-4">
+               {user.name}
+               <span className="text-[14px] bg-primary/10 text-primary px-3 py-1 rounded-xl flex items-center gap-1.5 border border-primary/10">
+                 🪙 <span className="font-mono">{user.coins || 0}</span> Coins
+               </span>
+             </h1>
              <p className="text-gray-400 font-medium">{user.email}</p>
           </div>
         </div>
@@ -167,9 +171,7 @@ const Profile = () => {
                        
                        <div className="flex flex-wrap gap-4 mb-6">
                           {(order.items || []).map((item, idx) => (
-                             <div key={idx} className="w-16 h-16 rounded-xl border border-gray-100 overflow-hidden bg-gray-50 flex-shrink-0">
-                                <img src={item.image} className="w-full h-full object-cover" alt="" />
-                             </div>
+                             <OptimizedImage key={idx} src={item.image} className="w-16 h-16 rounded-xl border border-gray-100 overflow-hidden bg-gray-50 flex-shrink-0" alt="" />
                           ))}
                        </div>
 

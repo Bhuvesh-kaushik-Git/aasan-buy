@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import OptimizedImage from '../components/OptimizedImage';
 
 const ThankYou = () => {
     const location = useLocation();
@@ -98,7 +99,7 @@ const ThankYou = () => {
                                 {order.items.map((item, idx) => (
                                     <div key={idx} className="flex gap-6 items-center group">
                                         <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
-                                            <img src={item.image} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={item.name} />
+                                            <OptimizedImage src={item.image} className="w-full h-full" alt={item.name} />
                                         </div>
                                         <div className="flex-grow">
                                             <h3 className="text-sm font-black text-dark group-hover:text-primary transition-colors">{item.name}</h3>
@@ -201,7 +202,7 @@ const ThankYou = () => {
                             {recommendedProducts.map(p => (
                                 <Link key={p._id} to={`/product/${p._id}`} className="group bg-white rounded-3xl p-4 border border-black/5 hover:border-primary/20 transition-all shadow-soft overflow-hidden">
                                     <div className="aspect-square rounded-2xl bg-gray-50 mb-4 overflow-hidden">
-                                        <img src={p.images?.[0]} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                                        <OptimizedImage src={p.images?.[0]} className="w-full h-full group-hover:scale-110 transition-transform duration-700" alt="" />
                                     </div>
                                     <h3 className="text-[11px] font-black text-dark line-clamp-1 mb-1">{p.name}</h3>
                                     <p className="text-[13px] font-black text-primary">₹{p.price.toLocaleString()}</p>

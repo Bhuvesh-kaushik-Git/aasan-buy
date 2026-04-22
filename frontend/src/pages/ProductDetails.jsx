@@ -3,9 +3,10 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../components/Toast';
 import { useWishlist } from '../context/WishlistContext';
+import OptimizedImage from '../components/OptimizedImage';
 import DOMPurify from 'dompurify';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // ── Components ──────────────────────────────────────────────────────────────
 
@@ -29,7 +30,7 @@ const SuggestionModal = ({ isOpen, onClose, onViewCart, relatedProducts = [] }) 
             {relatedProducts.slice(0, 4).map((item, i) => (
               <div key={i} className="group bg-white rounded-2xl p-3 flex flex-col items-center text-center border border-gray-100 shadow-soft hover:shadow-premium transition-all">
                 <div className="w-20 h-20 rounded-xl bg-gray-50 overflow-hidden mb-3">
-                  <img src={item.images?.[0]} loading="lazy" alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <OptimizedImage src={item.images?.[0]} alt={item.name} className="w-full h-full group-hover:scale-110 transition-transform duration-500" />
                 </div>
                 <span className="text-[11px] font-bold text-gray-500 mb-1 leading-tight line-clamp-1">{item.name}</span>
                 <span className="text-[13px] font-black text-primary mb-3">₹{item.price}</span>
@@ -326,7 +327,7 @@ const ProductDetails = ({ settings, onOpenCart }) => {
            {/* Left: Enhanced Images */}
            <div className="w-full lg:w-[48%] xl:w-[45%] bg-[#F8F9FB] flex flex-col lg:border-r border-gray-100 p-4 md:p-8">
               <div className="relative aspect-square bg-white rounded-[32px] shadow-soft border border-gray-100 overflow-hidden mb-6 flex items-center justify-center p-8 group">
-                  <img src={displayImages[activeImg]} className="max-w-full max-h-full object-contain transition-transform duration-700 group-hover:scale-110" alt={product.name} />
+                  <OptimizedImage src={displayImages[activeImg]} className="max-w-full max-h-full transition-transform duration-700 group-hover:scale-110" alt={product.name} />
                   {isOutOfStock && (
                       <div className="absolute inset-0 bg-dark/40 backdrop-blur-[2px] flex items-center justify-center">
                           <span className="bg-white text-dark font-black px-8 py-3 rounded-2xl tracking-[0.2em] shadow-2xl">SOLDOUT</span>
@@ -345,7 +346,7 @@ const ProductDetails = ({ settings, onOpenCart }) => {
                     key={i} onClick={() => setActiveImg(i)}
                     className={`shrink-0 w-24 h-24 rounded-2xl border-2 transition-all p-2 bg-white ${activeImg === i ? 'border-primary ring-4 ring-primary/5 scale-95 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'}`}
                    >
-                     <img src={img} loading="lazy" className="w-full h-full object-contain" />
+                     <OptimizedImage src={img} className="w-full h-full" />
                    </button>
                  ))}
               </div>

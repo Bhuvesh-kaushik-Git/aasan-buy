@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProductSkeleton, BannerSkeleton } from '../components/Skeleton';
 import { useWishlist } from '../context/WishlistContext';
+import OptimizedImage from '../components/OptimizedImage';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // ── Components ──────────────────────────────────────────────────────────────
 
@@ -24,11 +25,10 @@ const VerticalProductCard = ({ title, price, mrp, image, id, tagLabel, tagColor,
       className="group flex flex-col w-[280px] snap-center shrink-0 bg-white rounded-3xl shadow-soft hover:shadow-premium transition-all duration-500 overflow-hidden border border-gray-100/50"
     >
       <div className="w-full h-[300px] relative bg-[#F8F9FB] overflow-hidden">
-        <img 
+        <OptimizedImage 
           src={image} 
           alt={title} 
-          loading="lazy"
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]" 
+          className="w-full h-full group-hover:scale-110 transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]" 
         />
         {tagLabel && (
           <div 

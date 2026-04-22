@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../components/Toast';
+import OptimizedImage from '../components/OptimizedImage';
 
 const Wishlist = () => {
     const { wishlist, toggleWishlist, loading } = useWishlist();
@@ -50,7 +51,7 @@ const Wishlist = () => {
                         
                         <Link to={`/product/${product._id}`} className="block">
                             <div className="aspect-square rounded-[32px] bg-[#F8F9FB] overflow-hidden mb-6 flex items-center justify-center p-6 group-hover:bg-white transition-colors">
-                                <img src={product.images?.[0]} className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-700" alt={product.name} />
+                                <OptimizedImage src={product.images?.[0]} className="max-w-full max-h-full group-hover:scale-110 transition-transform duration-700" alt={product.name} />
                             </div>
                             <h3 className="text-sm font-black text-dark line-clamp-2 mb-2 group-hover:text-primary transition-colors">{product.name}</h3>
                             <p className="text-lg font-black text-primary mb-6">₹{product.price.toLocaleString()}</p>

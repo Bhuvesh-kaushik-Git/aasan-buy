@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast';
 const WishlistContext = createContext();
 export const useWishlist = () => useContext(WishlistContext);
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export const WishlistProvider = ({ children }) => {
   const [wishlist, setWishlist] = useState([]);
