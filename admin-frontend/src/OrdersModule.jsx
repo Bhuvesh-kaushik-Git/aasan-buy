@@ -41,8 +41,7 @@ const OrdersModule = ({ adminToken }) => {
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/orders?page=${page}&limit=${PAGE_SIZE}&search=${searchQuery}&status=${statusFilter}`, {
-        headers: { 'Authorization': `Bearer ${adminToken}` },
-        credentials: 'include'
+        headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       const data = await res.json();
       setOrders(data.orders || []);
@@ -50,7 +49,7 @@ const OrdersModule = ({ adminToken }) => {
       setTotal(data.totalItems || 0);
 
       if (allProducts.length === 0) {
-        const pRes = await fetch(`${API_URL}/api/products?limit=1000`, { headers: { 'Authorization': `Bearer ${adminToken}` }, credentials: 'include' });
+        const pRes = await fetch(`${API_URL}/api/products?limit=1000`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
         const pData = await pRes.json();
         setAllProducts(pData.products || []);
       }
@@ -69,7 +68,6 @@ const OrdersModule = ({ adminToken }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${adminToken}`
         },
-        credentials: 'include',
         body: JSON.stringify({ status: newStatus }),
       });
       setOrders(prev => prev.map(o => o._id === id ? { ...o, orderStatus: newStatus } : o));
@@ -87,7 +85,6 @@ const OrdersModule = ({ adminToken }) => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${adminToken}`
           },
-          credentials: 'include',
           body: JSON.stringify({ status: bulkStatus }),
         }))
       );
@@ -102,8 +99,7 @@ const OrdersModule = ({ adminToken }) => {
     try {
       const res = await fetch(`${API_URL}/api/orders/${id}/rollback`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${adminToken}` },
-        credentials: 'include'
+        headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       if (res.ok) {
         alert("Inventory Rolled Back Successfully.");
@@ -118,7 +114,6 @@ const OrdersModule = ({ adminToken }) => {
       const res = await fetch(`${API_URL}/api/orders/${editingOrder._id}/details`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-        credentials: 'include',
         body: JSON.stringify({ customerDetails: editingOrder.customerDetails })
       });
       if (res.ok) {
@@ -134,7 +129,6 @@ const OrdersModule = ({ adminToken }) => {
       const res = await fetch(`${API_URL}/api/orders/${addingToOrder._id}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
-        credentials: 'include',
         body: JSON.stringify(addingForm)
       });
       if (res.ok) {

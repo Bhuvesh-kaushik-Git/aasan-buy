@@ -33,15 +33,15 @@ router.post('/suggest', async (req, res) => {
       Inventory: ${inventoryList}
     `;
 
-    // 3. Call Groq API
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    // 3. Call Grok API
+    const response = await fetch('https://api.x.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Authorization': `Bearer ${process.env.GROK_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'mixtral-8x7b-32768',
+        model: 'grok-beta',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.1,
         response_format: { type: 'json_object' }
@@ -51,11 +51,11 @@ router.post('/suggest', async (req, res) => {
     const data = await response.json();
     
     if (!data.choices || !data.choices[0]) {
-       console.error("Groq AI Error Response:", data);
-       throw new Error(data.error?.message || "AI failed to respond. Check API Key or Groq limits.");
+       console.error("Grok AI Error Response:", data);
+       throw new Error(data.error?.message || "AI failed to respond. Check API Key or Grok limits.");
     }
 
-    // 4. Parse response manually for the array format usually returned by mixtral
+    // 4. Parse response manually for the array format usually returned by Grok
     const aiContent = data.choices[0].message.content;
     let suggestedIds = [];
     try {

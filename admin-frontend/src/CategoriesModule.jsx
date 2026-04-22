@@ -7,9 +7,11 @@ const CategoryProductAssigner = ({ categoryName, categoryId, onSaveCategoryProdu
   const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
   // Load a large chunk of products to allow selection (limit 1000 for admin ease-of-use MVP)
   useEffect(() => {
-    fetch('http://localhost:5001/api/products?limit=1000', { headers: { 'Authorization': `Bearer ${adminToken}` } })
+    fetch(`${API_URL}/api/products?limit=1000`, { headers: { 'Authorization': `Bearer ${adminToken}` } })
       .then(r => r.json())
       .then(d => {
          const prods = d.products || [];
@@ -33,7 +35,7 @@ const CategoryProductAssigner = ({ categoryName, categoryId, onSaveCategoryProdu
      e.preventDefault();
      setLoading(true);
      try {
-       await fetch(`http://localhost:5001/api/categories/${categoryId}/products`, {
+       await fetch(`${API_URL}/api/categories/${categoryId}/products`, {
          method: 'POST',
          headers: { 
            'Content-Type': 'application/json',
@@ -96,16 +98,17 @@ export default function CategoriesModule({ adminToken }) {
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingGiftWrap, setEditingGiftWrap] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
   const fetchCategories = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/categories`, {
-        headers: { 'Authorization': `Bearer ${adminToken}` },
-        credentials: 'include'
+        headers: { 'Authorization': `Bearer ${adminToken}` }
       });
-      setCategories(await res.json());
+      const data = await res.json();
+      if (res.ok) setCategories(data);
+      else console.error("Error fetching categories:", data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -117,10 +120,11 @@ export default function CategoriesModule({ adminToken }) {
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/giftwraps`, {
-        headers: { 'Authorization': `Bearer ${adminToken}` },
-        credentials: 'include'
+        headers: { 'Authorization': `Bearer ${adminToken}` }
       });
-      setGiftWraps(await res.json());
+      const data = await res.json();
+      if (res.ok) setGiftWraps(data);
+      else console.error("Error fetching gift wraps:", data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -147,7 +151,6 @@ export default function CategoriesModule({ adminToken }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${adminToken}`
         },
-        credentials: 'include',
         body: JSON.stringify({ name: editingCategory.name, image: editingCategory.image })
       });
       if(!res.ok) {
@@ -182,7 +185,6 @@ export default function CategoriesModule({ adminToken }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${adminToken}`
         },
-        credentials: 'include',
         body: JSON.stringify(editingGiftWrap)
       });
       if(!res.ok) return alert("Failed to save gift wrap");
@@ -200,8 +202,7 @@ export default function CategoriesModule({ adminToken }) {
      try {
          await fetch(`${API_URL}/api/categories/${id}`, { 
            method: 'DELETE',
-           headers: { 'Authorization': `Bearer ${adminToken}` },
-           credentials: 'include'
+           headers: { 'Authorization': `Bearer ${adminToken}` }
          });
          fetchCategories();
      } catch (e) {
@@ -214,8 +215,7 @@ export default function CategoriesModule({ adminToken }) {
     try {
         await fetch(`${API_URL}/api/giftwraps/${id}`, { 
           method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${adminToken}` },
-          credentials: 'include'
+          headers: { 'Authorization': `Bearer ${adminToken}` }
         });
         fetchGiftWraps();
     } catch (e) { console.error(e); }
@@ -256,6 +256,7 @@ export default function CategoriesModule({ adminToken }) {
              <CategoryProductAssigner 
                 categoryName={editingCategory.name} 
                 categoryId={editingCategory._id} 
+                adminToken={adminToken}
                 onSaveCategoryProducts={() => alert("Product synchronization complete! ✨")}
              />
            </div>
