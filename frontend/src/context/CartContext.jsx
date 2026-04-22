@@ -140,6 +140,17 @@ export const CartProvider = ({ children }) => {
     });
   };
 
+  const removeFromCart = (index) => {
+    setCart(prev => prev.filter((_, i) => i !== index));
+    // Clear warning for deleted item if any
+    setStockWarnings(prev => {
+        const newWarnings = { ...prev };
+        const productId = cart[index]?.productId;
+        if (productId) delete newWarnings[productId];
+        return newWarnings;
+    });
+  };
+
   const clearCart = () => { setCart([]); setStockWarnings({}); };
 
   const getCartTotal = (discount = 0) => {
