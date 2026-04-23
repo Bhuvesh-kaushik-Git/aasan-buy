@@ -511,12 +511,20 @@ const ProductDetails = ({ settings, onOpenCart }) => {
 
       {/* Dynamic Recommendation Rows (Product-Specific Override or Global Fallback) */}
       <div className="max-w-[1400px] mx-auto px-6 mt-20">
-         {(product.customRecommendationRows?.length > 0 
-           ? product.customRecommendationRows 
-           : (settings?.productDetailsRows || [])
-         ).map((row, idx) => (
-            <RecommendationRow key={idx} row={row} currentProduct={product} />
-         ))}
+         {(() => {
+           let rows = product.customRecommendationRows?.length > 0 
+             ? product.customRecommendationRows 
+             : (settings?.productDetailsRows || []);
+           
+           // Ensure AI recommendations show even if the admin hasn't created a CMS row for it
+           if (product.aiSuggestedProducts?.length > 0 && !rows.some(r => r.type === 'ai')) {
+             rows = [...rows, { rowTitle: 'AI Recommended For You', type: 'ai' }];
+           }
+           
+           return rows.map((row, idx) => (
+             <RecommendationRow key={idx} row={row} currentProduct={product} />
+           ));
+         })()}
       </div>
 
       <SuggestionModal 

@@ -1,0 +1,38 @@
+extends baseEmail
+
+block content
+  h2 Your order is confirmed! 🎉
+  p
+    | Hi 
+    strong #{order.customerDetails.fullName}
+    | , thank you for shopping with AasanBuy.
+  table(width='100%', style='border-collapse:collapse;margin:16px 0;background:#fafafa;border-radius:8px;overflow:hidden')
+    thead
+      tr(style='background:#f0ebff;font-size:12px;text-transform:uppercase;color:#3b1f6e')
+        th(style='padding:10px 8px;text-align:left') Item
+        th(style='padding:10px 8px;text-align:center') Qty
+        th(style='padding:10px 8px;text-align:right') Total
+    tbody
+      each item in order.items
+        tr
+          td(style='padding:6px 8px;border-bottom:1px solid #f0f0f0') #{item.name}
+          td(style='padding:6px 8px;border-bottom:1px solid #f0f0f0;text-align:center') &times;#{item.quantity}
+          td(style='padding:6px 8px;border-bottom:1px solid #f0f0f0;text-align:right') ₹#{item.price * item.quantity}
+    tfoot
+      tr(style='font-weight:bold;font-size:15px')
+        td(colspan='2', style='padding:12px 8px;text-align:right;color:#3b1f6e') Grand Total:
+        td(style='padding:12px 8px;text-align:right;color:#3b1f6e') ₹#{order.totalAmount}
+  if order.couponCode
+    p(style='color:#16a34a')
+      | 🏷 Coupon 
+      strong #{order.couponCode}
+      |  applied &mdash; you saved ₹#{order.discountAmount}
+  p
+    strong Payment: 
+    | #{order.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online (Razorpay)'}
+  p
+    strong Shipping to: 
+    | #{order.customerDetails.address}, #{order.customerDetails.city}, #{order.customerDetails.state} &ndash; #{order.customerDetails.pincode}
+  p(style='font-size:12px;color:#888;margin-top:24px')
+    | Order ID: 
+    code ##{order._id}

@@ -63,6 +63,11 @@ router.post(
       const exists = await User.findOne({ email });
       if (exists) return res.status(400).json({ error: 'User already exists with this email' });
       const user = await User.create({ name, email, password, phone });
+      
+      // Dispatch Welcome Email asynchronously
+      const { sendWelcomeEmail } = require('../utils/email');
+      sendWelcomeEmail(user).catch(err => console.error("Welcome email failed to send:", err));
+
       sendTokenResponse(user, 201, res);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -161,6 +166,10 @@ router.post(
       user.password = password;
       user.isGuest = false;
       await user.save();
+
+      // Dispatch Welcome Email asynchronously
+      const { sendWelcomeEmail } = require('../utils/email');
+      sendWelcomeEmail(user).catch(err => console.error("Welcome email failed to send:", err));
 
       sendTokenResponse(user, 200, res, 'Account claimed successfully! You can now login.');
     } catch (err) {
