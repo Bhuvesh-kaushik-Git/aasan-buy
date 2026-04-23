@@ -60,6 +60,31 @@ const UsersModule = ({ adminToken }) => {
     }
   };
 
+  const updatePaymentStatus = async (orderId, newStatus) => {
+    try {
+       const res = await fetch(`${API_URL}/api/orders/${orderId}/payment`, {
+          method: 'PUT',
+          headers: { 
+             'Authorization': `Bearer ${adminToken}`,
+             'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status: newStatus })
+       });
+       if (res.ok) {
+          // Refresh orders for the modal
+          if (selectedUserOrders) {
+             const updatedOrders = selectedUserOrders.orders.map(o => 
+                o._id === orderId ? { ...o, paymentStatus: newStatus } : o
+             );
+             setSelectedUserOrders({ ...selectedUserOrders, orders: updatedOrders });
+          }
+          fetchUsers(); // Refresh main list to update 'Spent' amount
+       }
+    } catch (err) {
+       alert("Failed to update payment status");
+    }
+ };
+
   const updateCoins = async (id, currentCoins) => {
     const newVal = window.prompt("Set AasanCoins for this user:", currentCoins);
     if (newVal === null) return;
@@ -181,7 +206,7 @@ const UsersModule = ({ adminToken }) => {
                 </td>
               </tr>
             ))}
-            {loading && <tr><td colSpan="5" className="px-8 py-10 text-center animate-pulse text-primary font-black uppercase tracking-widest text-xs">Synchronizing users...</td></tr>}
+            {loading && <tr><td colSpan="7" className="px-8 py-10 text-center animate-pulse text-primary font-black uppercase tracking-widest text-xs">Synchronizing users...</td></tr>}
           </tbody>
         </table>
       </div>
@@ -206,6 +231,7 @@ const UsersModule = ({ adminToken }) => {
             onClose={() => setSelectedUserOrders(null)} 
             user={selectedUserOrders.user} 
             orders={selectedUserOrders.orders} 
+            onMarkPaid={updatePaymentStatus}
          />
       )}
     </div>
@@ -215,7 +241,7 @@ const UsersModule = ({ adminToken }) => {
 export default UsersModule;
 
 // Modal Overlay for User Orders
-const OrdersModal = ({ isOpen, onClose, user, orders }) => {
+const OrdersModal = ({ isOpen, onClose, user, orders, onMarkPaid }) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 md:p-12">
@@ -236,20 +262,45 @@ const OrdersModal = ({ isOpen, onClose, user, orders }) => {
                 </div>
              ) : (
                 orders.map(order => (
-                   <div key={order._id} className="bg-gray-50 border border-gray-100 rounded-[24px] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-primary/20 transition-all group">
-                      <div className="space-y-1">
-                         <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">#{order._id.slice(-8).toUpperCase()}</span>
-                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg ${order.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                               {order.paymentStatus}
-                            </span>
+                  <div key={order._id} className="bg-gray-50 border border-gray-100 rounded-[32px] p-8 flex flex-col gap-6 hover:border-primary/20 transition-all group">
+                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                       <div className="space-y-1">
+                        <div className="flex items-center gap-3">
+                           <span className="text-[10px] font-black text-primary uppercase tracking-widest">#{order._id.slice(-8).toUpperCase()}</span>
+                           <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg ${order.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                              {order.paymentStatus}
+                           </span>
+                        </div>
+                        <h4 className="text-sm font-black text-dark">{new Date(order.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</h4>
+                        <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">{order.paymentMethod?.toUpperCase()}</p>
+                       </div>
+                       <div className="flex items-center gap-6">
+                         <div className="text-right">
+                           <p className="text-2xl font-black text-dark tracking-tighter">₹{order.totalAmount.toLocaleString()}</p>
+                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{order.orderStatus}</span>
                          </div>
-                         <h4 className="text-sm font-black text-dark">{new Date(order.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</h4>
-                         <p className="text-[11px] text-gray-400 font-medium">{order.items.length} items · {order.paymentMethod.toUpperCase()}</p>
-                      </div>
-                      <div className="text-right">
-                         <p className="text-xl font-black text-dark tracking-tighter">₹{order.totalAmount.toLocaleString()}</p>
-                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{order.orderStatus}</span>
+                         {order.paymentStatus !== 'paid' && (
+                           <button 
+                              onClick={() => onMarkPaid(order._id, 'paid')}
+                              className="px-6 py-3 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all"
+                           >
+                              Mark Paid
+                           </button>
+                         )}
+                       </div>
+                     </div>
+
+                     {/* Item Details */}
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200/50">
+                        {order.items?.map((item, iIdx) => (
+                           <div key={iIdx} className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-gray-100">
+                              <img src={item.image} alt="" className="w-10 h-10 rounded-lg object-cover bg-gray-50" />
+                              <div>
+                                 <p className="text-[12px] font-black text-dark leading-none">{item.name}</p>
+                                 <p className="text-[10px] text-gray-400 mt-1 font-bold">{item.quantity} × ₹{item.price.toLocaleString()}</p>
+                               </div>
+                            </div>
+                         ))}
                       </div>
                    </div>
                 ))

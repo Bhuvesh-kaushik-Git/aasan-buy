@@ -74,6 +74,20 @@ const OrdersModule = ({ adminToken }) => {
     } catch (err) { console.error(err); }
   };
 
+  const handlePaymentStatusChange = async (id, newStatus) => {
+    try {
+      await fetch(`${API_URL}/api/orders/${id}/payment`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      setOrders(prev => prev.map(o => o._id === id ? { ...o, paymentStatus: newStatus } : o));
+    } catch (err) { console.error(err); }
+  };
+
   const handleBulkUpdate = async () => {
     if (!selectedIds.length) return;
     setBulkLoading(true);
@@ -260,7 +274,17 @@ const OrdersModule = ({ adminToken }) => {
                       </td>
                       <td className="px-4 py-4">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block">{order.paymentMethod}</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-max ${order.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{order.paymentStatus}</span>
+                        <div className="flex items-center gap-2">
+                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-max ${order.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{order.paymentStatus}</span>
+                           {order.paymentStatus !== 'paid' && (
+                              <button 
+                                 onClick={(e) => { e.stopPropagation(); handlePaymentStatusChange(order._id, 'paid'); }}
+                                 className="text-[9px] font-black text-emerald-500 hover:underline uppercase"
+                              >
+                                 Mark Paid
+                              </button>
+                           )}
+                        </div>
                       </td>
                       <td className="px-4 py-4" onClick={e => e.stopPropagation()}>
                         <select
@@ -349,6 +373,9 @@ const OrdersModule = ({ adminToken }) => {
 
                                {/* Manual Overrides */}
                                <div className="mt-8 flex justify-end gap-4">
+                                  {order.paymentStatus !== 'paid' && (
+                                     <button onClick={() => handlePaymentStatusChange(order._id, 'paid')} className="bg-emerald-50 text-emerald-600 text-[10px] font-black px-8 py-4 rounded-2xl border border-emerald-100 hover:bg-emerald-500 hover:text-white transition-all shadow-xl shadow-emerald-500/10">Mark Order as Paid</button>
+                                  )}
                                   {order.orderStatus !== 'Cancelled' && (
                                     <button onClick={() => handleRollback(order._id)} className="bg-rose-50 text-rose-600 text-[10px] font-black px-8 py-4 rounded-2xl border border-rose-100 hover:bg-rose-500 hover:text-white transition-all shadow-xl shadow-rose-500/10">⚡ Atomic Rollback (Inventory Leak Fix)</button>
                                   )}
