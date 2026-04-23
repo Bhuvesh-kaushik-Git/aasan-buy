@@ -246,63 +246,150 @@ const OrdersModal = ({ isOpen, onClose, user, orders, onMarkPaid }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 md:p-12">
        <div className="absolute inset-0 bg-dark/60 backdrop-blur-sm" onClick={onClose} />
-       <div className="relative bg-white w-full max-w-4xl rounded-[40px] shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[85vh]">
+       <div className="relative bg-white w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
           <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
              <div>
-                <h3 className="text-2xl font-black text-dark tracking-tighter">Purchase History</h3>
-                <p className="text-gray-400 text-sm font-medium uppercase tracking-widest mt-1">{user.name} · {orders.length} Total Orders</p>
+                <h3 className="text-2xl font-black text-dark tracking-tighter">Customer Intelligence Report</h3>
+                <p className="text-gray-400 text-sm font-medium uppercase tracking-widest mt-1">{user.name} · {orders.length} Orders Synchronized</p>
              </div>
              <button onClick={onClose} className="w-12 h-12 flex items-center justify-center bg-white rounded-2xl shadow-soft hover:bg-red-50 hover:text-red-500 transition-all text-xl">✕</button>
           </div>
-          <div className="flex-1 overflow-y-auto p-8 space-y-4">
+          <div className="flex-1 overflow-y-auto p-8 space-y-8">
              {orders.length === 0 ? (
                 <div className="text-center py-20">
                    <div className="text-4xl mb-4">📦</div>
-                   <p className="text-gray-400 font-black uppercase tracking-widest text-xs">No orders found for this customer</p>
+                   <p className="text-gray-400 font-black uppercase tracking-widest text-xs">No transaction records found</p>
                 </div>
              ) : (
                 orders.map(order => (
-                  <div key={order._id} className="bg-gray-50 border border-gray-100 rounded-[32px] p-8 flex flex-col gap-6 hover:border-primary/20 transition-all group">
-                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                       <div className="space-y-1">
-                        <div className="flex items-center gap-3">
-                           <span className="text-[10px] font-black text-primary uppercase tracking-widest">#{order._id.slice(-8).toUpperCase()}</span>
-                           <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg ${order.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                              {order.paymentStatus}
-                           </span>
-                        </div>
-                        <h4 className="text-sm font-black text-dark">{new Date(order.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</h4>
-                        <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">{order.paymentMethod?.toUpperCase()}</p>
+                  <div key={order._id} className="bg-white border border-gray-100 rounded-[40px] p-8 flex flex-col gap-8 shadow-soft hover:shadow-premium transition-all">
+                     
+                     {/* Header: ID and Primary Status */}
+                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 border-b border-gray-50 pb-8">
+                       <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                             <span className="text-[12px] font-black text-primary bg-primary/5 px-4 py-1.5 rounded-xl border border-primary/10 uppercase tracking-widest">Order ID: {order._id.toUpperCase()}</span>
+                             <span className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-xl shadow-sm ${order.paymentStatus === 'paid' ? 'bg-emerald-500 text-white' : 'bg-amber-400 text-white'}`}>
+                                {order.paymentStatus}
+                             </span>
+                             <span className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-100 text-gray-500`}>
+                                {order.orderStatus}
+                             </span>
+                          </div>
+                          <h4 className="text-xl font-black text-dark tracking-tight">{new Date(order.createdAt).toLocaleDateString(undefined, { dateStyle: 'full' })}</h4>
                        </div>
+                       
                        <div className="flex items-center gap-6">
-                         <div className="text-right">
-                           <p className="text-2xl font-black text-dark tracking-tighter">₹{order.totalAmount.toLocaleString()}</p>
-                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{order.orderStatus}</span>
-                         </div>
-                         {order.paymentStatus !== 'paid' && (
+                          <div className="text-right">
+                            <p className="text-3xl font-black text-dark tracking-tighter">₹{order.totalAmount.toLocaleString()}</p>
+                            <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] mt-1">{order.paymentMethod} protocol</p>
+                          </div>
+                          {order.paymentStatus !== 'paid' && (
                            <button 
                               onClick={() => onMarkPaid(order._id, 'paid')}
-                              className="px-6 py-3 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all"
+                              className="px-8 py-4 bg-emerald-500 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 shadow-xl shadow-emerald-500/20 transition-all transform hover:-translate-y-1 active:translate-y-0"
                            >
-                              Mark Paid
+                              Settle Payment
                            </button>
                          )}
                        </div>
                      </div>
 
-                     {/* Item Details */}
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200/50">
-                        {order.items?.map((item, iIdx) => (
-                           <div key={iIdx} className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-gray-100">
-                              <img src={item.image} alt="" className="w-10 h-10 rounded-lg object-cover bg-gray-50" />
-                              <div>
-                                 <p className="text-[12px] font-black text-dark leading-none">{item.name}</p>
-                                 <p className="text-[10px] text-gray-400 mt-1 font-bold">{item.quantity} × ₹{item.price.toLocaleString()}</p>
-                               </div>
-                            </div>
-                         ))}
-                      </div>
-                   </div>
+                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        
+                        {/* 1. Item Manifest */}
+                        <div className="lg:col-span-2 space-y-6">
+                           <h5 className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em]">Inventory Allocation</h5>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {order.items?.map((item, iIdx) => (
+                                 <div key={iIdx} className="flex items-center gap-4 bg-gray-50/50 p-4 rounded-3xl border border-gray-100 hover:bg-white transition-colors">
+                                    <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-gray-200 shadow-sm">
+                                       <img src={item.image} alt="" className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="min-w-0">
+                                       <p className="text-[13px] font-black text-dark truncate">{item.name}</p>
+                                       <div className="flex gap-2 mt-1">
+                                          <span className="text-[10px] text-gray-400 font-bold uppercase">{item.quantity} Unit{item.quantity > 1 ? 's' : ''}</span>
+                                          <span className="text-[10px] text-primary font-black uppercase">₹{item.price.toLocaleString()}</span>
+                                       </div>
+                                       {(item.selectedSize || item.selectedColor) && (
+                                          <p className="text-[9px] text-gray-400 font-black uppercase tracking-tighter mt-1">
+                                             {item.selectedSize && `Size: ${item.selectedSize}`} {item.selectedColor && `· Color: ${item.selectedColor.name}`}
+                                          </p>
+                                       )}
+                                    </div>
+                                 </div>
+                              ))}
+                           </div>
+
+                           {/* Financial Summary */}
+                           <div className="bg-gray-50 rounded-[32px] p-6 space-y-4">
+                              <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-gray-400">
+                                 <span>Subtotal</span>
+                                 <span>₹{(order.originalAmount || order.totalAmount + (order.discountAmount || 0)).toLocaleString()}</span>
+                              </div>
+                              {order.discountAmount > 0 && (
+                                 <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 p-3 rounded-xl">
+                                    <span>Coupon Applied ({order.couponCode || 'PROMO'})</span>
+                                    <span>- ₹{order.discountAmount.toLocaleString()}</span>
+                                 </div>
+                              )}
+                              <div className="flex justify-between pt-4 border-t border-gray-200">
+                                 <span className="text-xs font-black text-dark uppercase tracking-widest">Final Settlement</span>
+                                 <span className="text-xl font-black text-primary tracking-tighter">₹{order.totalAmount.toLocaleString()}</span>
+                              </div>
+                           </div>
+                        </div>
+
+                        {/* 2. Logistics & References */}
+                        <div className="space-y-8">
+                           {/* Shipping Logistics */}
+                           <div className="space-y-4">
+                              <h5 className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em]">Shipping Logistics</h5>
+                              <div className="bg-white border border-gray-100 rounded-[32px] p-6 shadow-soft space-y-4">
+                                 <div>
+                                    <p className="text-[14px] font-black text-dark">{order.customerDetails?.fullName}</p>
+                                    <p className="text-[11px] text-gray-400 font-medium mt-0.5">{order.customerDetails?.phone} · {order.customerDetails?.email}</p>
+                                 </div>
+                                 <div className="pt-4 border-t border-gray-50">
+                                    <p className="text-[12px] text-gray-500 font-medium leading-relaxed">
+                                       {order.customerDetails?.address}<br />
+                                       {order.customerDetails?.city}, {order.customerDetails?.state} - <span className="font-black text-dark">{order.customerDetails?.pincode}</span>
+                                    </p>
+                                 </div>
+                              </div>
+                           </div>
+
+                           {/* Payment Intelligence */}
+                           <div className="space-y-4">
+                              <h5 className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em]">Payment Intelligence</h5>
+                              <div className="bg-gray-900 rounded-[32px] p-6 text-white space-y-4 shadow-xl">
+                                 <div>
+                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Method</p>
+                                    <p className="text-sm font-black uppercase tracking-widest">{order.paymentMethod}</p>
+                                 </div>
+                                 {order.razorpayOrderId && (
+                                    <div className="pt-4 border-t border-white/10">
+                                       <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Razorpay Order ID</p>
+                                       <p className="text-[11px] font-mono text-white/80 break-all">{order.razorpayOrderId}</p>
+                                    </div>
+                                 )}
+                                 {order.razorpayPaymentId && (
+                                    <div className="pt-2">
+                                       <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Razorpay Payment ID</p>
+                                       <p className="text-[11px] font-mono text-white/80 break-all">{order.razorpayPaymentId}</p>
+                                    </div>
+                                 )}
+                                 <div className="pt-4 border-t border-white/10 flex justify-between items-center">
+                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Integrity Check</p>
+                                    <div className={`w-2 h-2 rounded-full ${order.paymentStatus === 'paid' ? 'bg-emerald-400 shadow-[0_0_10px_#34d399]' : 'bg-amber-400 shadow-[0_0_10px_#fbbf24]'}`} />
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+
+                     </div>
+                  </div>
                 ))
              )}
           </div>
