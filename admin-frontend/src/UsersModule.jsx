@@ -334,9 +334,19 @@ const OrdersModal = ({ isOpen, onClose, user, orders, onMarkPaid }) => {
                                  <span>₹{(order.originalAmount || order.totalAmount + (order.discountAmount || 0)).toLocaleString()}</span>
                               </div>
                               {order.discountAmount > 0 && (
-                                 <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 p-3 rounded-xl">
-                                    <span>Coupon Applied ({order.couponCode || 'PROMO'})</span>
-                                    <span>- ₹{order.discountAmount.toLocaleString()}</span>
+                                 <div className="space-y-2">
+                                    {(order.discountAmount - (order.aasanCoinsUsed || 0)) > 0 && (
+                                       <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 p-3 rounded-xl">
+                                          <span>Coupon Applied ({order.couponCode || 'PROMO'})</span>
+                                          <span>- ₹{(order.discountAmount - (order.aasanCoinsUsed || 0)).toLocaleString()}</span>
+                                       </div>
+                                    )}
+                                    {(order.aasanCoinsUsed || 0) > 0 && (
+                                       <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-secondary bg-secondary/5 p-3 rounded-xl border border-secondary/10">
+                                          <span>AasanCoins Redeemed</span>
+                                          <span>- ₹{order.aasanCoinsUsed.toLocaleString()}</span>
+                                       </div>
+                                    )}
                                  </div>
                               )}
                               <div className="flex justify-between pt-4 border-t border-gray-200">
