@@ -29,8 +29,18 @@ router.get('/', async (req, res) => {
 
     const users = await Promise.all(usersRaw.map(async (u) => {
        const stats = await Order.aggregate([
-          { $match: { user: u._id, paymentStatus: 'paid' } },
-          { $group: { _id: null, count: { $sum: 1 }, total: { $sum: '$totalAmount' } } }
+          { $match: { user: u._id, paymentStatus: { $ne: 'failed' } } },
+          { 
+            $group: { 
+              _id: null, 
+              count: { $sum: 1 }, 
+              total: { 
+                $sum: { 
+                  $cond: [{ $eq: ["$paymentStatus", "paid"] }, "$totalAmount", 0] 
+                } 
+              } 
+            } 
+          }
        ]);
        return {
           ...u.toObject(),
