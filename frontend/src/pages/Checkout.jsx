@@ -59,6 +59,8 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [useAasanCoins, setUseAasanCoins] = useState(false);
+  const [referrerName, setReferrerName] = useState(null);
+  const [referralLoading, setReferralLoading] = useState(false);
   const { showToast } = useToast();
 
   const handleSelectAddress = (addr) => {
@@ -105,7 +107,7 @@ const Checkout = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ code: couponCode, orderTotal: subtotal, userId: user?._id }),
+        body: JSON.stringify({ code: couponCode, orderTotal: subtotal, userId: user?._id, email: formData.email }),
       });
       const data = await res.json();
       if (res.ok && data.valid) {
@@ -128,6 +130,26 @@ const Checkout = () => {
     setCouponCode('');
     setCouponMsg(null);
     setIsCouponAnimated(false);
+  };
+  
+  const handleVerifyReferral = async () => {
+     if (!referralCode.trim()) return;
+     setReferralLoading(true);
+     setReferrerName(null);
+     try {
+        const res = await fetch(`${API_URL}/api/auth/verify-referral/${referralCode.trim()}`);
+        const data = await res.json();
+        if (res.ok && data.valid) {
+           setReferrerName(data.name);
+           showToast(`Code verified! Referrer: ${data.name}`, 'success');
+        } else {
+           showToast(data.error || 'Invalid referral code', 'error');
+        }
+     } catch {
+        showToast('Verification failed', 'error');
+     } finally {
+        setReferralLoading(false);
+     }
   };
 
   const handlePlaceOrder = async (e) => {
@@ -354,17 +376,27 @@ const Checkout = () => {
                </div>
             )}
 
-            {!user?.referredBy && (
-               <div className="mb-4">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">Referral Code (Optional)</label>
-                  <input
-                    value={referralCode} onChange={e => setReferralCode(e.target.value.toUpperCase())}
-                    placeholder="Shared by a friend?"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold uppercase focus:outline-none focus:border-secondary transition-all"
-                  />
-                  <p className="text-[9px] text-gray-400 mt-1.5 font-medium">Enter a friend's code to reward them!</p>
-               </div>
-            )}
+             {!user?.referredBy && (
+                <div className="mb-4">
+                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">Referral Code (Optional)</label>
+                   <div className="flex gap-2">
+                      <input
+                        value={referralCode} onChange={e => { setReferralCode(e.target.value.toUpperCase()); setReferrerName(null); }}
+                        placeholder="FRIEND-CODE"
+                        className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold uppercase focus:outline-none focus:border-secondary transition-all"
+                      />
+                      <button onClick={handleVerifyReferral} disabled={referralLoading || !referralCode.trim()} className="bg-primary/10 text-primary text-xs font-black px-4 py-2.5 rounded-xl hover:bg-primary/20 transition-all disabled:opacity-50">
+                        {referralLoading ? '...' : 'Verify'}
+                      </button>
+                   </div>
+                   {referrerName && (
+                      <p className="text-[10px] mt-2 font-black text-emerald-600 flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                         ✨ Referrer: <span className="uppercase">{referrerName}</span>
+                      </p>
+                   )}
+                   <p className="text-[9px] text-gray-400 mt-1.5 font-medium">Enter a friend's code to reward them!</p>
+                </div>
+             )}
 
             {/* Totals */}
             <div className="border-t border-gray-100 pt-4 space-y-2">

@@ -257,4 +257,16 @@ router.post('/logout', (req, res) => {
   res.status(200).json({ success: true, message: 'Logged out' });
 });
 
+// @route  GET /api/auth/verify-referral/:code
+// @desc   Check if a referral code is valid and return the owner's name
+router.get('/verify-referral/:code', async (req, res) => {
+  try {
+    const user = await User.findOne({ referralCode: req.params.code.toUpperCase() }).select('name');
+    if (!user) return res.status(404).json({ valid: false, error: 'Invalid referral code' });
+    res.json({ valid: true, name: user.name });
+  } catch (err) {
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
 module.exports = router;
