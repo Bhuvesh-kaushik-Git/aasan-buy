@@ -30,6 +30,7 @@ const sendTokenResponse = (user, statusCode, res, message = null) => {
       phone: user.phone,
       referralCode: user.referralCode,
       aasanCoins: user.aasanCoins,
+      coins: user.aasanCoins,
       success: true,
       message
     });
@@ -98,7 +99,21 @@ router.post(
 
 // @route  GET /api/auth/profile  (protected)
 router.get('/profile', protect, async (req, res) => {
-  res.json(req.user);
+  const user = req.user;
+  res.json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    phone: user.phone,
+    referralCode: user.referralCode,
+    aasanCoins: user.aasanCoins,
+    coins: user.aasanCoins,
+    addresses: user.addresses,
+    wishlist: user.wishlist,
+    cart: user.cart,
+    success: true
+  });
 });
 
 // @route  PUT /api/auth/profile  (protected) – Update name & phone
@@ -118,7 +133,7 @@ router.put(
       if (req.body.name  !== undefined) user.name  = req.body.name;
       if (req.body.phone !== undefined) user.phone = req.body.phone;
       await user.save();
-      res.json({ _id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role, referralCode: user.referralCode });
+      res.json({ _id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role, referralCode: user.referralCode, aasanCoins: user.aasanCoins, coins: user.aasanCoins });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

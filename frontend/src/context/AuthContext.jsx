@@ -21,6 +21,7 @@ export const AuthProvider = ({ children }) => {
           if (res.ok) {
             const data = await res.json();
             setUser(data);
+            localStorage.setItem('aasanUser', JSON.stringify(data));
           } else {
             localStorage.removeItem('aasanUser'); // Stale session
           }

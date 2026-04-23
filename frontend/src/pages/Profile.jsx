@@ -108,7 +108,7 @@ const Profile = () => {
              <h1 className="text-3xl font-black text-dark tracking-tighter flex items-center gap-4">
                {user.name}
                <span className="text-[14px] bg-primary/10 text-primary px-3 py-1 rounded-xl flex items-center gap-1.5 border border-primary/10">
-                 🪙 <span className="font-mono">{user.coins || 0}</span> Coins
+                 🪙 <span className="font-mono">{user.aasanCoins ?? user.coins ?? 0}</span> Coins
                </span>
              </h1>
              <p className="text-gray-400 font-medium">{user.email}</p>

@@ -15,7 +15,11 @@ const TrackOrder = () => {
         setLoading(true);
         setOrderData(null);
         try {
-            const res = await fetch(`${API_URL}/api/orders/track?orderId=${orderId.trim()}&email=${email.trim()}`);
+            const res = await fetch(`${API_URL}/api/orders/track`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: orderId.trim(), email: email.trim() })
+            });
             const data = await res.json();
             if (res.ok) {
                 setOrderData(data);

@@ -136,7 +136,7 @@ const Header = ({ settings, onOpenCart }) => {
                     <div className="hidden sm:flex items-center gap-2 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-100/50 shadow-soft animate-fade-in group/coin">
                         <span className="text-sm group-hover:scale-125 transition-transform duration-500">🪙</span>
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-amber-800 leading-none">{user.aasanCoins || 0}</span>
+                            <span className="text-[10px] font-black text-amber-800 leading-none">{user.aasanCoins ?? user.coins ?? 0}</span>
                             <span className="text-[7px] font-black text-amber-600 uppercase tracking-tighter">AasanCoins</span>
                         </div>
                     </div>
