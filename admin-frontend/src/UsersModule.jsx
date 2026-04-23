@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const UsersModule = ({ adminToken }) => {
   const [users, setUsers] = useState([]);
@@ -315,6 +315,11 @@ const OrdersModal = ({ isOpen, onClose, user, orders, onMarkPaid }) => {
                                        {(item.selectedSize || item.selectedColor) && (
                                           <p className="text-[9px] text-gray-400 font-black uppercase tracking-tighter mt-1">
                                              {item.selectedSize && `Size: ${item.selectedSize}`} {item.selectedColor && `· Color: ${item.selectedColor.name}`}
+                                          </p>
+                                       )}
+                                       {item.giftWrap?.title && (
+                                          <p className="text-[9px] bg-rose-50 text-rose-500 px-2 py-0.5 rounded font-black uppercase tracking-tighter mt-1">
+                                             🎁 Gift Wrap: {item.giftWrap.title} (+₹{item.giftWrap.price})
                                           </p>
                                        )}
                                     </div>
