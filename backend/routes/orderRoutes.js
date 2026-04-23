@@ -102,9 +102,12 @@ router.post('/', async (req, res) => {
     // Link referral if provided and not already linked
     if (referralCode && !userRecord.referredBy) {
       const referrer = await User.findOne({ referralCode: referralCode.toUpperCase() });
-      if (referrer && referrer._id.toString() !== userId.toString()) {
-        userRecord.referredBy = referrer._id;
-        await userRecord.save();
+      if (referrer) {
+         if (referrer._id.toString() === userId.toString()) {
+            return res.status(400).json({ error: "You cannot use your own referral code." });
+         }
+         userRecord.referredBy = referrer._id;
+         await userRecord.save();
       }
     }
 
@@ -196,9 +199,9 @@ router.post('/', async (req, res) => {
         await User.findByIdAndUpdate(userId, { $inc: { aasanCoins: -coinsUsed } });
       }
 
-      // Referral Reward Logic
+      // Referral Reward Logic: Give 100 coins to referrer on COD order
       if (userRecord && userRecord.referredBy) {
-        await generateReferralCoupon(userRecord.referredBy);
+        await User.findByIdAndUpdate(userRecord.referredBy, { $inc: { aasanCoins: 100 } });
       }
 
       sendOrderConfirmation(newOrder).catch(() => {});
@@ -255,11 +258,11 @@ router.post('/verify-payment', async (req, res) => {
        });
     }
 
-    // Referral Reward Logic
+    // Referral Reward Logic: Give 100 coins to referrer on successful payment
     if (order.referralAttributed && order.user) {
       const userRecord = await User.findById(order.user);
       if (userRecord && userRecord.referredBy) {
-        await generateReferralCoupon(userRecord.referredBy);
+        await User.findByIdAndUpdate(userRecord.referredBy, { $inc: { aasanCoins: 100 } });
       }
     }
 

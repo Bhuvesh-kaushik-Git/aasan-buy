@@ -9,6 +9,8 @@ const UsersModule = ({ adminToken }) => {
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
+  const [selectedUserOrders, setSelectedUserOrders] = useState(null); // { user, orders }
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -28,6 +30,21 @@ const UsersModule = ({ adminToken }) => {
   };
 
   useEffect(() => { fetchUsers(); }, [page, search]);
+
+  const fetchUserOrders = async (u) => {
+     setOrdersLoading(true);
+     try {
+        const res = await fetch(`${API_URL}/api/users/${u._id}/orders`, {
+           headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+        const data = await res.json();
+        setSelectedUserOrders({ user: u, orders: data });
+     } catch (err) {
+        alert("Failed to fetch user orders");
+     } finally {
+        setOrdersLoading(false);
+     }
+  };
 
   const toggleStatus = async (id) => {
     try {
@@ -106,7 +123,8 @@ const UsersModule = ({ adminToken }) => {
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Customer</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Joined</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Coins</th>
-              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Phone</th>
+              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Orders</th>
+              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Spent</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Account State</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Actions</th>
             </tr>
@@ -138,7 +156,18 @@ const UsersModule = ({ adminToken }) => {
                       </button>
                    </div>
                 </td>
-                <td className="px-8 py-5 text-[12px] font-medium text-gray-500">{u.phone || 'N/A'}</td>
+                <td className="px-8 py-5">
+                   <button 
+                      onClick={() => fetchUserOrders(u)}
+                      className="group/btn flex flex-col hover:bg-gray-100 p-2 rounded-xl transition-all"
+                   >
+                      <span className="font-black text-dark text-sm group-hover/btn:text-primary">{u.orderCount || 0}</span>
+                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">View List →</span>
+                   </button>
+                </td>
+                <td className="px-8 py-5">
+                   <span className="font-black text-emerald-600 text-sm">₹{(u.totalSpent || 0).toLocaleString()}</span>
+                </td>
                 <td className="px-8 py-5">
                    <button 
                      onClick={() => toggleStatus(u._id)}
@@ -170,8 +199,63 @@ const UsersModule = ({ adminToken }) => {
           >→</button>
         </div>
       )}
+
+      {selectedUserOrders && (
+         <OrdersModal 
+            isOpen={!!selectedUserOrders} 
+            onClose={() => setSelectedUserOrders(null)} 
+            user={selectedUserOrders.user} 
+            orders={selectedUserOrders.orders} 
+         />
+      )}
     </div>
   );
 };
 
 export default UsersModule;
+
+// Modal Overlay for User Orders
+const OrdersModal = ({ isOpen, onClose, user, orders }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 md:p-12">
+       <div className="absolute inset-0 bg-dark/60 backdrop-blur-sm" onClick={onClose} />
+       <div className="relative bg-white w-full max-w-4xl rounded-[40px] shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[85vh]">
+          <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+             <div>
+                <h3 className="text-2xl font-black text-dark tracking-tighter">Purchase History</h3>
+                <p className="text-gray-400 text-sm font-medium uppercase tracking-widest mt-1">{user.name} · {orders.length} Total Orders</p>
+             </div>
+             <button onClick={onClose} className="w-12 h-12 flex items-center justify-center bg-white rounded-2xl shadow-soft hover:bg-red-50 hover:text-red-500 transition-all text-xl">✕</button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-8 space-y-4">
+             {orders.length === 0 ? (
+                <div className="text-center py-20">
+                   <div className="text-4xl mb-4">📦</div>
+                   <p className="text-gray-400 font-black uppercase tracking-widest text-xs">No orders found for this customer</p>
+                </div>
+             ) : (
+                orders.map(order => (
+                   <div key={order._id} className="bg-gray-50 border border-gray-100 rounded-[24px] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-primary/20 transition-all group">
+                      <div className="space-y-1">
+                         <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">#{order._id.slice(-8).toUpperCase()}</span>
+                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg ${order.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                               {order.paymentStatus}
+                            </span>
+                         </div>
+                         <h4 className="text-sm font-black text-dark">{new Date(order.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</h4>
+                         <p className="text-[11px] text-gray-400 font-medium">{order.items.length} items · {order.paymentMethod.toUpperCase()}</p>
+                      </div>
+                      <div className="text-right">
+                         <p className="text-xl font-black text-dark tracking-tighter">₹{order.totalAmount.toLocaleString()}</p>
+                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{order.orderStatus}</span>
+                      </div>
+                   </div>
+                ))
+             )}
+          </div>
+       </div>
+    </div>
+  );
+};
