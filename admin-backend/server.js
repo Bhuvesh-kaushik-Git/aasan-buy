@@ -34,6 +34,7 @@ app.use('/api/coupons',    require('./routes/couponRoutes'));
 app.use('/api/users',      require('./routes/userRoutes'));   
 app.use('/api/ai',         require('./routes/aiRoutes'));     
 app.use('/api/giftwraps',  require('./routes/giftWrapRoutes'));
+app.use('/api/upload',     require('./routes/uploadRoutes'));
 
 // Global Error Handler
 app.use((err, req, res, next) => {

@@ -307,7 +307,7 @@ export default function ProductsModule({ adminToken }) {
               </div>
               <div className="col-span-2">
                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-3">Product Images (Gallery)</label>
-                <TagInput tags={editingProduct.images || []} setTags={(tags) => setEditingProduct(p => ({...p, images: tags}))} placeholder="Enter image URL and press Enter" />
+                <TagInput adminToken={adminToken} allowUpload={true} tags={editingProduct.images || []} setTags={(tags) => setEditingProduct(p => ({...p, images: tags}))} placeholder="Enter image URL and press Enter" />
               </div>
 
               <div className="col-span-2">
@@ -335,7 +335,7 @@ export default function ProductsModule({ adminToken }) {
                                  <input type="text" placeholder="Color Name (e.g. Midnight Blue)" value={col.name} onChange={e => { const newC = [...editingProduct.colors]; newC[idx].name = e.target.value; setEditingProduct(p => ({...p, colors: newC})); }} className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] text-dark focus:outline-none focus:border-secondary" />
                               </div>
                               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Variant Images (URLs)</label>
-                              <TagInput tags={col.images || []} setTags={(tags) => { const newC = [...editingProduct.colors]; newC[idx].images = tags; setEditingProduct(p => ({...p, colors: newC})); }} placeholder="Paste image URL and Enter" />
+                              <TagInput adminToken={adminToken} allowUpload={true} tags={col.images || []} setTags={(tags) => { const newC = [...editingProduct.colors]; newC[idx].images = tags; setEditingProduct(p => ({...p, colors: newC})); }} placeholder="Paste image URL and Enter" />
                            </div>
                        </div>
                     ))}

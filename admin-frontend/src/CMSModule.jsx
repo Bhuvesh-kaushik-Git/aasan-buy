@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import ImageUploader from './components/ImageUploader';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -480,7 +481,22 @@ const CMSModule = ({ adminToken }) => {
                 <button onClick={() => handleRemoveBanner(index)} className="absolute -top-1 -right-1 bg-red-500 text-white w-5 h-5 rounded-full text-[10px] opacity-0 group-hover:opacity-100">✕</button>
                 <img src={banner.imageUrl} className="w-16 h-16 rounded-xl object-cover bg-white" alt="" />
                 <div className="flex-1 space-y-2">
-                   <input type="text" value={banner.imageUrl} onChange={e => handleBannerChange(index, 'imageUrl', e.target.value)} placeholder="Image URL" className="w-full text-[10px] bg-white px-2 py-1 rounded border-0" />
+                   <div className="flex gap-2 w-full">
+                       <input type="text" value={banner.imageUrl} onChange={e => handleBannerChange(index, 'imageUrl', e.target.value)} placeholder="Image URL" className="flex-1 text-[10px] bg-white px-2 py-1 rounded border-0 shadow-sm" />
+                       <label className="cursor-pointer bg-primary/10 text-primary hover:bg-primary hover:text-white px-2 py-1 rounded text-[10px] font-bold transition-colors">
+                         Upload
+                         <input type="file" accept="image/*" className="hidden" 
+                           onChange={async e => {
+                              const file = e.target.files[0]; if(!file) return;
+                              const fd = new FormData(); fd.append('image', file);
+                              try{
+                                 const r = await fetch(`${API_URL}/api/upload`, { method:'POST', headers:{'Authorization':`Bearer ${adminToken}`}, body:fd});
+                                 const d = await r.json(); if(r.ok) handleBannerChange(index, 'imageUrl', d.url);
+                              } catch(err) { console.error(err); }
+                           }} 
+                         />
+                       </label>
+                   </div>
                    <input type="text" value={banner.title} onChange={e => handleBannerChange(index, 'title', e.target.value)} placeholder="Title" className="w-full text-xs font-black bg-white px-2 py-1 rounded border-0" />
                 </div>
               </div>
@@ -575,7 +591,22 @@ const CMSModule = ({ adminToken }) => {
                            <img src={occ.imageUrl} className="w-full h-32 object-cover rounded-2xl" />
                            <div className="space-y-2">
                               <input type="text" value={occ.label} onChange={e => handleOccasionChange(sIdx, oIdx, 'label', e.target.value)} className="w-full text-sm font-black border-0 bg-gray-50 rounded-xl px-3 py-2" placeholder="Label (e.g. Birthdays)" />
-                              <input type="text" value={occ.imageUrl} onChange={e => handleOccasionChange(sIdx, oIdx, 'imageUrl', e.target.value)} className="w-full text-[10px] text-gray-400 border-0 bg-gray-50 rounded-xl px-3 py-1.5" placeholder="Image URL" />
+                              <div className="flex gap-2">
+                                 <input type="text" value={occ.imageUrl} onChange={e => handleOccasionChange(sIdx, oIdx, 'imageUrl', e.target.value)} className="flex-1 text-[10px] text-gray-400 border-0 bg-gray-50 rounded-xl px-3 py-1.5" placeholder="Image URL" />
+                                 <label className="cursor-pointer flex items-center justify-center bg-gray-200 hover:bg-secondary hover:text-white px-3 rounded-xl text-[10px] font-bold transition-colors">
+                                    Upload
+                                    <input type="file" accept="image/*" className="hidden" 
+                                      onChange={async e => {
+                                         const file = e.target.files[0]; if(!file) return;
+                                         const fd = new FormData(); fd.append('image', file);
+                                         try{
+                                            const r = await fetch(`${API_URL}/api/upload`, { method:'POST', headers:{'Authorization':`Bearer ${adminToken}`}, body:fd});
+                                            const d = await r.json(); if(r.ok) handleOccasionChange(sIdx, oIdx, 'imageUrl', d.url);
+                                         } catch(err) { console.error(err); }
+                                      }} 
+                                    />
+                                 </label>
+                              </div>
                            </div>
                            
                            <div className="border-t border-gray-50 pt-4">
