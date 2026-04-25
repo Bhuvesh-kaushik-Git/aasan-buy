@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ImageUploader from './components/ImageUploader';
 
 // A simple component to search through products and check off those belonging to a category
 const CategoryProductAssigner = ({ categoryName, categoryId, onSaveCategoryProducts, adminToken }) => {
@@ -238,9 +239,13 @@ export default function CategoriesModule({ adminToken }) {
                 <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest block ml-1">Identity</label>
                 <input required type="text" value={editingCategory.name || ''} onChange={e => setEditingCategory(p => ({...p, name: e.target.value}))} className="w-full border-0 rounded-2xl px-6 py-4 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-secondary/10 focus:outline-none transition-all font-black text-sm" placeholder="e.g. Wedding Luxe" />
               </div>
-              <div className="space-y-3">
+              <div className="space-y-3 col-span-full">
                 <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest block ml-1">Visual Asset (URL)</label>
-                <input type="text" value={editingCategory.image || ''} onChange={e => setEditingCategory(p => ({...p, image: e.target.value}))} className="w-full border-0 rounded-2xl px-6 py-4 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-secondary/10 focus:outline-none transition-all font-black text-sm" placeholder="https://..." />
+                <ImageUploader 
+                   adminToken={adminToken}
+                   value={editingCategory.image || ''} 
+                   onChange={(url) => setEditingCategory(p => ({...p, image: url}))} 
+                />
               </div>
            </div>
            
@@ -287,7 +292,11 @@ export default function CategoriesModule({ adminToken }) {
               </div>
               <div className="space-y-3 col-span-full">
                 <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest block ml-1">Visual Asset URL</label>
-                <input type="text" value={editingGiftWrap.image || ''} onChange={e => setEditingGiftWrap(p => ({...p, image: e.target.value}))} className="w-full border-0 rounded-2xl px-6 py-4 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-secondary/10 focus:outline-none transition-all font-black text-sm" />
+                <ImageUploader 
+                   adminToken={adminToken}
+                   value={editingGiftWrap.image || ''} 
+                   onChange={(url) => setEditingGiftWrap(p => ({...p, image: url}))} 
+                />
               </div>
               <div className="flex items-center gap-3 ml-1">
                  <input type="checkbox" id="gift-active" checked={editingGiftWrap.isActive ?? true} onChange={e => setEditingGiftWrap(p => ({...p, isActive: e.target.checked}))} className="w-5 h-5 accent-secondary" />
