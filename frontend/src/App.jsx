@@ -20,7 +20,7 @@ import { AuthProvider } from './context/AuthContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { ToastProvider } from './components/Toast';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // Cart Drawer is a standalone component so it can use hooks cleanly
 function CartDrawer({ cartOpen, setCartOpen }) {

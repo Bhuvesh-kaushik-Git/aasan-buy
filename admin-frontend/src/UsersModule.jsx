@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const UsersModule = ({ adminToken }) => {
   const [users, setUsers] = useState([]);
@@ -9,6 +9,8 @@ const UsersModule = ({ adminToken }) => {
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
+  const [selectedUserOrders, setSelectedUserOrders] = useState(null); // { user, orders }
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -29,6 +31,21 @@ const UsersModule = ({ adminToken }) => {
 
   useEffect(() => { fetchUsers(); }, [page, search]);
 
+  const fetchUserOrders = async (u) => {
+     setOrdersLoading(true);
+     try {
+        const res = await fetch(`${API_URL}/api/users/${u._id}/orders`, {
+           headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+        const data = await res.json();
+        setSelectedUserOrders({ user: u, orders: data });
+     } catch (err) {
+        alert("Failed to fetch user orders");
+     } finally {
+        setOrdersLoading(false);
+     }
+  };
+
   const toggleStatus = async (id) => {
     try {
       const res = await fetch(`${API_URL}/api/users/${id}/toggle-status`, {
@@ -42,6 +59,30 @@ const UsersModule = ({ adminToken }) => {
       alert(err.message);
     }
   };
+
+  const updatePaymentStatus = async (orderId, newStatus) => {
+    try {
+       const res = await fetch(`${API_URL}/api/orders/${orderId}/payment`, {
+          method: 'PUT',
+          headers: { 
+             'Authorization': `Bearer ${adminToken}`,
+             'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status: newStatus })
+       });
+       if (res.ok) {
+          if (selectedUserOrders) {
+             const updatedOrders = selectedUserOrders.orders.map(o => 
+                o._id === orderId ? { ...o, paymentStatus: newStatus } : o
+             );
+             setSelectedUserOrders({ ...selectedUserOrders, orders: updatedOrders });
+          }
+          fetchUsers();
+       }
+    } catch (err) {
+       alert("Failed to update payment status");
+    }
+ };
 
   const updateCoins = async (id, currentCoins) => {
     const newVal = window.prompt("Set AasanCoins for this user:", currentCoins);
@@ -106,7 +147,8 @@ const UsersModule = ({ adminToken }) => {
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Customer</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Joined</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Coins</th>
-              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Phone</th>
+              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Orders</th>
+              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Spent</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Account State</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Actions</th>
             </tr>
@@ -138,7 +180,18 @@ const UsersModule = ({ adminToken }) => {
                       </button>
                    </div>
                 </td>
-                <td className="px-8 py-5 text-[12px] font-medium text-gray-500">{u.phone || 'N/A'}</td>
+                <td className="px-8 py-5">
+                   <button 
+                      onClick={() => fetchUserOrders(u)}
+                      className="group/btn flex flex-col hover:bg-gray-100 p-2 rounded-xl transition-all"
+                   >
+                      <span className="font-black text-dark text-sm group-hover/btn:text-primary">{u.orderCount || 0}</span>
+                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">View List →</span>
+                   </button>
+                </td>
+                <td className="px-8 py-5">
+                   <span className="font-black text-emerald-600 text-sm">₹{(u.totalSpent || 0).toLocaleString()}</span>
+                </td>
                 <td className="px-8 py-5">
                    <button 
                      onClick={() => toggleStatus(u._id)}
@@ -152,7 +205,7 @@ const UsersModule = ({ adminToken }) => {
                 </td>
               </tr>
             ))}
-            {loading && <tr><td colSpan="5" className="px-8 py-10 text-center animate-pulse text-primary font-black uppercase tracking-widest text-xs">Synchronizing users...</td></tr>}
+            {loading && <tr><td colSpan="7" className="px-8 py-10 text-center animate-pulse text-primary font-black uppercase tracking-widest text-xs">Synchronizing users...</td></tr>}
           </tbody>
         </table>
       </div>
@@ -170,8 +223,201 @@ const UsersModule = ({ adminToken }) => {
           >→</button>
         </div>
       )}
+
+      {selectedUserOrders && (
+         <OrdersModal 
+            isOpen={!!selectedUserOrders} 
+            onClose={() => setSelectedUserOrders(null)} 
+            user={selectedUserOrders.user} 
+            orders={selectedUserOrders.orders} 
+            onMarkPaid={updatePaymentStatus}
+         />
+      )}
     </div>
   );
 };
 
 export default UsersModule;
+
+const OrdersModal = ({ isOpen, onClose, user, orders, onMarkPaid }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 md:p-12">
+       <div className="absolute inset-0 bg-dark/60 backdrop-blur-sm" onClick={onClose} />
+       <div className="relative bg-white w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
+          <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+             <div>
+                <h3 className="text-2xl font-black text-dark tracking-tighter">Customer Intelligence Report</h3>
+                <p className="text-gray-400 text-sm font-medium uppercase tracking-widest mt-1">{user.name} · {orders.length} Orders Synchronized</p>
+             </div>
+             <button onClick={onClose} className="w-12 h-12 flex items-center justify-center bg-white rounded-2xl shadow-soft hover:bg-red-50 hover:text-red-500 transition-all text-xl">✕</button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-8 space-y-8">
+             {orders.length === 0 ? (
+                <div className="text-center py-20">
+                   <div className="text-4xl mb-4">📦</div>
+                   <p className="text-gray-400 font-black uppercase tracking-widest text-xs">No transaction records found</p>
+                </div>
+             ) : (
+                orders.map(order => {
+                  const itemsSubtotal = order.items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+                  const gwTotal = order.items?.reduce((sum, item) => sum + (item.giftWrap?.price || 0), 0) || 0;
+
+                  return (
+                    <div key={order._id} className="bg-white border border-gray-100 rounded-[40px] p-8 flex flex-col gap-8 shadow-soft hover:shadow-premium transition-all">
+                       <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 border-b border-gray-50 pb-8">
+                         <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                               <span className="text-[12px] font-black text-primary bg-primary/5 px-4 py-1.5 rounded-xl border border-primary/10 uppercase tracking-widest">Order ID: {order._id.toUpperCase()}</span>
+                               <span className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-xl shadow-sm ${order.paymentStatus === 'paid' ? 'bg-emerald-500 text-white' : 'bg-amber-400 text-white'}`}>
+                                  {order.paymentStatus}
+                               </span>
+                               <span className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-100 text-gray-500`}>
+                                  {order.orderStatus}
+                               </span>
+                            </div>
+                            <h4 className="text-xl font-black text-dark tracking-tight">{new Date(order.createdAt).toLocaleDateString(undefined, { dateStyle: 'full' })}</h4>
+                         </div>
+                         
+                         <div className="flex items-center gap-6">
+                            <div className="text-right">
+                              <p className="text-3xl font-black text-dark tracking-tighter">₹{order.totalAmount.toLocaleString()}</p>
+                              <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] mt-1">{order.paymentMethod} protocol</p>
+                            </div>
+                            {order.paymentStatus !== 'paid' && (
+                             <button 
+                                onClick={() => onMarkPaid(order._id, 'paid')}
+                                className="px-8 py-4 bg-emerald-500 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 shadow-xl shadow-emerald-500/20 transition-all transform hover:-translate-y-1 active:translate-y-0"
+                             >
+                                Settle Payment
+                             </button>
+                           )}
+                         </div>
+                       </div>
+
+                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                          <div className="lg:col-span-2 space-y-6">
+                             <h5 className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em]">Inventory Allocation</h5>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {order.items?.map((item, iIdx) => (
+                                   <div key={iIdx} className="flex items-center gap-4 bg-gray-50/50 p-4 rounded-3xl border border-gray-100 hover:bg-white transition-colors">
+                                      <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-gray-200 shadow-sm">
+                                         <img src={item.image} alt="" className="w-full h-full object-cover" />
+                                      </div>
+                                      <div className="min-w-0">
+                                         <p className="text-[13px] font-black text-dark truncate">{item.name}</p>
+                                         <div className="flex gap-2 mt-1">
+                                            <span className="text-[10px] text-gray-400 font-bold uppercase">{item.quantity} Unit{item.quantity > 1 ? 's' : ''}</span>
+                                            <span className="text-[10px] text-primary font-black uppercase">₹{item.price.toLocaleString()}</span>
+                                         </div>
+                                         {(item.selectedSize || item.selectedColor) && (
+                                            <p className="text-[9px] text-gray-400 font-black uppercase tracking-tighter mt-1">
+                                               {item.selectedSize && `Size: ${item.selectedSize}`} {item.selectedColor && `· Color: ${item.selectedColor.name}`}
+                                            </p>
+                                         )}
+                                         {item.giftWrap?.title && (
+                                            <div className="flex mt-2">
+                                               <span className="text-[9px] bg-rose-50 text-rose-500 px-3 py-1 rounded-lg font-black uppercase tracking-tighter border border-rose-100 animate-pulse">
+                                                  🎁 Packing Gift: {item.giftWrap.title} (+₹{item.giftWrap.price})
+                                               </span>
+                                            </div>
+                                         )}
+                                      </div>
+                                   </div>
+                                ))}
+                             </div>
+
+                             {/* High-Fidelity Financial Summary */}
+                             <div className="bg-gray-50 rounded-[40px] p-8 space-y-5 border border-gray-100 shadow-inner">
+                                <div className="flex justify-between items-center">
+                                   <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Base Item Total</span>
+                                   <span className="text-sm font-black text-dark">₹{itemsSubtotal.toLocaleString()}</span>
+                                </div>
+
+                                {gwTotal > 0 && (
+                                   <div className="flex justify-between items-center py-4 border-y border-gray-100">
+                                      <span className="text-[11px] font-black text-rose-400 uppercase tracking-widest">Packing Gift Surcharge</span>
+                                      <span className="text-sm font-black text-rose-500">+ ₹{gwTotal.toLocaleString()}</span>
+                                   </div>
+                                )}
+
+                                {order.discountAmount > 0 && (
+                                   <div className="space-y-3">
+                                      {(order.discountAmount - (order.aasanCoinsUsed || 0)) > 0 && (
+                                         <div className="flex justify-between items-center text-emerald-600">
+                                            <span className="text-[11px] font-black uppercase tracking-widest">Coupon Savings ({order.couponCode || 'PROMO'})</span>
+                                            <span className="text-sm font-black">- ₹{(order.discountAmount - (order.aasanCoinsUsed || 0)).toLocaleString()}</span>
+                                         </div>
+                                      )}
+                                      {(order.aasanCoinsUsed || 0) > 0 && (
+                                         <div className="flex justify-between items-center text-secondary">
+                                            <span className="text-[11px] font-black uppercase tracking-widest">AasanCoins Redemption</span>
+                                            <span className="text-sm font-black">- ₹{order.aasanCoinsUsed.toLocaleString()}</span>
+                                         </div>
+                                      )}
+                                   </div>
+                                )}
+
+                                <div className="flex justify-between items-center pt-5 border-t-2 border-gray-200">
+                                   <span className="text-xs font-black text-dark uppercase tracking-[0.2em]">Final Settlement</span>
+                                   <div className="text-right">
+                                      <span className="text-2xl font-black text-primary tracking-tighter">₹{order.totalAmount.toLocaleString()}</span>
+                                      <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mt-1">Transaction Complete</p>
+                                   </div>
+                                </div>
+                             </div>
+                          </div>
+
+                          <div className="space-y-8">
+                             <div className="space-y-4">
+                                <h5 className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em]">Shipping Logistics</h5>
+                                <div className="bg-white border border-gray-100 rounded-[32px] p-6 shadow-soft space-y-4">
+                                   <div>
+                                      <p className="text-[14px] font-black text-dark">{order.customerDetails?.fullName}</p>
+                                      <p className="text-[11px] text-gray-400 font-medium mt-0.5">{order.customerDetails?.phone} · {order.customerDetails?.email}</p>
+                                   </div>
+                                   <div className="pt-4 border-t border-gray-50">
+                                      <p className="text-[12px] text-gray-500 font-medium leading-relaxed">
+                                         {order.customerDetails?.address}<br />
+                                         {order.customerDetails?.city}, {order.customerDetails?.state} - <span className="font-black text-dark">{order.customerDetails?.pincode}</span>
+                                      </p>
+                                   </div>
+                                </div>
+                             </div>
+
+                             <div className="space-y-4">
+                                <h5 className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em]">Payment Intelligence</h5>
+                                <div className="bg-gray-900 rounded-[32px] p-6 text-white space-y-4 shadow-xl">
+                                   <div>
+                                      <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Method</p>
+                                      <p className="text-sm font-black uppercase tracking-widest">{order.paymentMethod}</p>
+                                   </div>
+                                   {order.razorpayOrderId && (
+                                      <div className="pt-4 border-t border-white/10">
+                                         <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Razorpay Order ID</p>
+                                         <p className="text-[11px] font-mono text-white/80 break-all">{order.razorpayOrderId}</p>
+                                      </div>
+                                   )}
+                                   {order.razorpayPaymentId && (
+                                      <div className="pt-2">
+                                         <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Razorpay Payment ID</p>
+                                         <p className="text-[11px] font-mono text-white/80 break-all">{order.razorpayPaymentId}</p>
+                                      </div>
+                                   )}
+                                   <div className="pt-4 border-t border-white/10 flex justify-between items-center">
+                                      <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Integrity Check</p>
+                                      <div className={`w-2 h-2 rounded-full ${order.paymentStatus === 'paid' ? 'bg-emerald-400 shadow-[0_0_10px_#34d399]' : 'bg-amber-400 shadow-[0_0_10px_#fbbf24]'}`} />
+                                   </div>
+                                </div>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                  );
+                })
+             )}
+          </div>
+       </div>
+    </div>
+  );
+};

@@ -59,6 +59,22 @@ router.put('/:id/status', async (req, res) => {
   }
 });
 
+// Update payment status
+router.put('/:id/payment', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { paymentStatus: status },
+      { new: true }
+    );
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error updating payment status' });
+  }
+});
+
 // @route PUT /api/orders/:id/details
 // @desc  Update customer shipping/contact details
 router.put('/:id/details', async (req, res) => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 const PAGE_SIZE = 15;
 
 const statusColors = {
@@ -71,6 +71,20 @@ const OrdersModule = ({ adminToken }) => {
         body: JSON.stringify({ status: newStatus }),
       });
       setOrders(prev => prev.map(o => o._id === id ? { ...o, orderStatus: newStatus } : o));
+    } catch (err) { console.error(err); }
+  };
+
+  const handlePaymentStatusChange = async (id, newStatus) => {
+    try {
+      await fetch(`${API_URL}/api/orders/${id}/payment`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      setOrders(prev => prev.map(o => o._id === id ? { ...o, paymentStatus: newStatus } : o));
     } catch (err) { console.error(err); }
   };
 
@@ -150,7 +164,6 @@ const OrdersModule = ({ adminToken }) => {
     else setSelectedIds(prev => [...new Set([...prev, ...ids])]);
   };
 
-  // Filtered logic removed (now handled by server)
   const totalPages = pages;
   const pageOrders = orders;
 
@@ -260,7 +273,17 @@ const OrdersModule = ({ adminToken }) => {
                       </td>
                       <td className="px-4 py-4">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block">{order.paymentMethod}</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-max ${order.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{order.paymentStatus}</span>
+                        <div className="flex items-center gap-2">
+                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-max ${order.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{order.paymentStatus}</span>
+                           {order.paymentStatus !== 'paid' && (
+                              <button 
+                                 onClick={(e) => { e.stopPropagation(); handlePaymentStatusChange(order._id, 'paid'); }}
+                                 className="text-[9px] font-black text-emerald-500 hover:underline uppercase"
+                              >
+                                 Mark Paid
+                              </button>
+                           )}
+                        </div>
                       </td>
                       <td className="px-4 py-4" onClick={e => e.stopPropagation()}>
                         <select
@@ -317,38 +340,82 @@ const OrdersModule = ({ adminToken }) => {
                                                <h5 className="text-[13px] font-black text-dark">{item.name}</h5>
                                                <p className="text-[13px] font-black text-primary">₹ {item.price * item.quantity}</p>
                                             </div>
-                                            <div className="flex items-center gap-3 mt-1.5">
-                                               <span className="text-[10px] bg-gray-50 px-2 py-0.5 rounded font-black text-gray-400 uppercase">QTY: {item.quantity}</span>
-                                               {item.selectedSize && <span className="text-[10px] bg-gray-50 px-2 py-0.5 rounded font-black text-gray-400 uppercase">SIZE: {item.selectedSize}</span>}
-                                               {item.selectedColor && <span className="w-4 h-4 rounded-full border border-gray-100" style={{ backgroundColor: item.selectedColor.hex }}></span>}
-                                               {item.giftWrap && (
-                                                 <span className="text-[10px] bg-rose-50 text-rose-500 px-2 py-0.5 rounded font-black uppercase tracking-tighter">🎁 {item.giftWrap.title} (+₹{item.giftWrap.price})</span>
-                                               )}
-                                            </div>
+                                            <div className="flex flex-col gap-2 mt-1.5">
+                                              <div className="flex items-center gap-3">
+                                                 <span className="text-[10px] bg-gray-50 px-2 py-0.5 rounded font-black text-gray-400 uppercase">QTY: {item.quantity}</span>
+                                                 {item.selectedSize && <span className="text-[10px] bg-gray-50 px-2 py-0.5 rounded font-black text-gray-400 uppercase">SIZE: {item.selectedSize}</span>}
+                                                 {item.selectedColor && <span className="w-4 h-4 rounded-full border border-gray-100" style={{ backgroundColor: item.selectedColor.hex }}></span>}
+                                              </div>
+                                              {item.giftWrap?.title && (
+                                                 <div className="flex">
+                                                    <span className="text-[10px] bg-rose-50 text-rose-500 px-3 py-1 rounded-lg font-black uppercase tracking-tighter border border-rose-100 animate-pulse">
+                                                       🎁 Packing Gift: {item.giftWrap.title} (+₹{item.giftWrap.price})
+                                                    </span>
+                                                 </div>
+                                              )}
+                                           </div>
                                          </div>
                                       </div>
                                     ))}
                                   </div>
 
-                                  <div className="mt-8 pt-8 border-t border-gray-50 flex justify-between items-end">
-                                     <div className="flex gap-6">
-                                        <div>
-                                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Loyalty Influence</p>
-                                           <div className="flex gap-3">
-                                              <span className="bg-emerald-50 text-emerald-600 text-[10px] font-black px-3 py-1.5 rounded-lg border border-emerald-100">Earned: +{order.aasanCoinsEarned || 0}</span>
-                                              {order.aasanCoinsUsed > 0 && <span className="bg-secondary/5 text-secondary text-[10px] font-black px-3 py-1.5 rounded-lg border border-secondary/10">Spent: -{order.aasanCoinsUsed}</span>}
-                                           </div>
-                                        </div>
-                                     </div>
-                                     <div className="text-right">
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Financial Settlement</p>
-                                        <p className="text-3xl font-black font-heading text-dark tracking-tighter">₹ {order.totalAmount.toLocaleString()}</p>
-                                     </div>
-                                  </div>
+                                   {(() => {
+                                      const itemsSubtotal = order.items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+                                      const gwTotal = order.items?.reduce((sum, item) => sum + (item.giftWrap?.price || 0), 0) || 0;
+
+                                      return (
+                                         <div className="mt-8 pt-8 border-t border-gray-50 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="space-y-4">
+                                               <div>
+                                                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Loyalty Intelligence</p>
+                                                  <div className="flex gap-3">
+                                                     <span className="bg-emerald-50 text-emerald-600 text-[10px] font-black px-3 py-1.5 rounded-lg border border-emerald-100">Earned: +{order.aasanCoinsEarned || 0}</span>
+                                                     {(order.aasanCoinsUsed || 0) > 0 && <span className="bg-secondary/5 text-secondary text-[10px] font-black px-3 py-1.5 rounded-lg border border-secondary/10">Spent: -{order.aasanCoinsUsed}</span>}
+                                                  </div>
+                                               </div>
+                                               
+                                               <div className="space-y-2">
+                                                  <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-gray-400">
+                                                     <span>Item Subtotal</span>
+                                                     <span>₹{itemsSubtotal.toLocaleString()}</span>
+                                                  </div>
+                                                  {gwTotal > 0 && (
+                                                     <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100">
+                                                        <span>Packing Surcharge</span>
+                                                        <span>+ ₹{gwTotal.toLocaleString()}</span>
+                                                     </div>
+                                                  )}
+                                                  {(order.discountAmount - (order.aasanCoinsUsed || 0)) > 0 && (
+                                                     <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                                                        <span>Coupon ({order.couponCode || 'PROMO'})</span>
+                                                        <span>- ₹{(order.discountAmount - (order.aasanCoinsUsed || 0)).toLocaleString()}</span>
+                                                     </div>
+                                                  )}
+                                                  {(order.aasanCoinsUsed || 0) > 0 && (
+                                                     <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-secondary bg-secondary/5 p-3 rounded-xl border border-secondary/10">
+                                                        <span>Coins Redeemed</span>
+                                                        <span>- ₹{order.aasanCoinsUsed.toLocaleString()}</span>
+                                                     </div>
+                                                  )}
+                                               </div>
+                                            </div>
+
+                                            <div className="text-right flex flex-col justify-end">
+                                               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Final Settlement</p>
+                                               <div className="space-y-1">
+                                                  <p className="text-4xl font-black font-heading text-dark tracking-tighter leading-none">₹ {order.totalAmount.toLocaleString()}</p>
+                                               </div>
+                                            </div>
+                                         </div>
+                                      );
+                                   })()}
                                </div>
 
                                {/* Manual Overrides */}
                                <div className="mt-8 flex justify-end gap-4">
+                                  {order.paymentStatus !== 'paid' && (
+                                     <button onClick={() => handlePaymentStatusChange(order._id, 'paid')} className="bg-emerald-50 text-emerald-600 text-[10px] font-black px-8 py-4 rounded-2xl border border-emerald-100 hover:bg-emerald-500 hover:text-white transition-all shadow-xl shadow-emerald-500/10">Mark Order as Paid</button>
+                                  )}
                                   {order.orderStatus !== 'Cancelled' && (
                                     <button onClick={() => handleRollback(order._id)} className="bg-rose-50 text-rose-600 text-[10px] font-black px-8 py-4 rounded-2xl border border-rose-100 hover:bg-rose-500 hover:text-white transition-all shadow-xl shadow-rose-500/10">⚡ Atomic Rollback (Inventory Leak Fix)</button>
                                   )}

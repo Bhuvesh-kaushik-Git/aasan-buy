@@ -283,20 +283,25 @@ const Home = ({ settings }) => {
                {loading ? (
                  Array(4).fill(0).map((_, i) => <ProductSkeleton key={i} />)
                ) : (
-                 settings.homeProductTabs[activeProductTab]?.products?.map((item, pIdx) => (
-                   <div key={pIdx} className="animate-fade-in" style={{ animationDelay: `${pIdx * 100}ms` }}>
-                    <VerticalProductCard 
-                      id={item.product?._id}
-                      title={item.product?.name}
-                      price={item.product?.price || 0}
-                      mrp={item.product?.mrp}
-                      image={item.product?.images?.[0]}
-                      tagLabel={item.tagLabel}
-                      tagColor={item.tagColor}
-                      rating={item.product?.rating}
-                    />
-                   </div>
-                 ))
+                  settings.homeProductTabs[activeProductTab]?.products?.map((item, pIdx) => {
+                    const productData = typeof item.product === 'object' ? item.product : null;
+                    if (!productData) return null; // Skip if not populated correctly
+                    
+                    return (
+                      <div key={pIdx} className="animate-fade-in" style={{ animationDelay: `${pIdx * 100}ms` }}>
+                       <VerticalProductCard 
+                         id={productData._id}
+                         title={productData.name}
+                         price={productData.price || 0}
+                         mrp={productData.mrp}
+                         image={productData.images?.[0]}
+                         tagLabel={item.tagLabel}
+                         tagColor={item.tagColor}
+                         rating={productData.rating}
+                       />
+                      </div>
+                    );
+                  })
                )}
             </div>
           </section>

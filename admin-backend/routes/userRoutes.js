@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const Order = require('../models/Order');
 const { protect, adminOnly } = require('../middleware/auth');
 
 router.use(protect, adminOnly);
@@ -21,10 +22,32 @@ router.get('/', async (req, res) => {
       ];
     }
 
-    const [users, total] = await Promise.all([
+    const [usersRaw, total] = await Promise.all([
       User.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
       User.countDocuments(query)
     ]);
+
+    const users = await Promise.all(usersRaw.map(async (u) => {
+       const stats = await Order.aggregate([
+          { $match: { user: u._id, paymentStatus: { $ne: 'failed' } } },
+          { 
+            $group: { 
+              _id: null, 
+              count: { $sum: 1 }, 
+              total: { 
+                $sum: { 
+                  $cond: [{ $eq: ["$paymentStatus", "paid"] }, "$totalAmount", 0] 
+                } 
+              } 
+            } 
+          }
+       ]);
+       return {
+          ...u.toObject(),
+          orderCount: stats[0]?.count || 0,
+          totalSpent: stats[0]?.total || 0
+       };
+    }));
 
     res.json({
       users,
@@ -67,6 +90,16 @@ router.put('/:id/update-coins', async (req, res) => {
     res.json(user);
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// @desc    Get orders for a specific user
+router.get('/:id/orders', async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.params.id }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
