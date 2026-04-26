@@ -4,6 +4,8 @@ import { useCart } from '../context/CartContext';
 import { useToast } from '../components/Toast';
 import { useWishlist } from '../context/WishlistContext';
 import OptimizedImage from '../components/OptimizedImage';
+import ImageMagnifier from '../components/ImageMagnifier';
+import ShareButton from '../components/ShareButton';
 import DOMPurify from 'dompurify';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -326,8 +328,8 @@ const ProductDetails = ({ settings, onOpenCart }) => {
            
            {/* Left: Enhanced Images */}
            <div className="w-full lg:w-[48%] xl:w-[45%] bg-[#F8F9FB] flex flex-col lg:border-r border-gray-100 p-4 md:p-8">
-              <div className="relative aspect-square bg-white rounded-[32px] shadow-soft border border-gray-100 overflow-hidden mb-6 flex items-center justify-center p-8 group">
-                  <OptimizedImage src={displayImages[activeImg]} className="max-w-full max-h-full transition-transform duration-700 group-hover:scale-110" alt={product.name} />
+              <div className="relative aspect-square bg-white rounded-[32px] shadow-soft border border-gray-100 overflow-hidden mb-6 flex items-center justify-center p-8 group lg:overflow-visible">
+                  <ImageMagnifier src={displayImages[activeImg]} alt={product.name} />
                   {isOutOfStock && (
                       <div className="absolute inset-0 bg-dark/40 backdrop-blur-[2px] flex items-center justify-center">
                           <span className="bg-white text-dark font-black px-8 py-3 rounded-2xl tracking-[0.2em] shadow-2xl">SOLDOUT</span>
@@ -359,9 +361,14 @@ const ProductDetails = ({ settings, onOpenCart }) => {
                   {product.stock <= 5 && !isOutOfStock && <span className="bg-amber-500 text-white text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest animate-pulse">🔥 High Demand</span>}
               </div>
 
-              <h1 className="text-3xl md:text-5xl font-black font-heading text-dark leading-tight mb-6">
-                {product.name}
-              </h1>
+              <div className="flex items-start justify-between gap-4 mb-6">
+                 <h1 className="text-3xl md:text-5xl font-black font-heading text-dark leading-tight flex-1">
+                   {product.name}
+                 </h1>
+                 <div className="shrink-0 pt-2">
+                    <ShareButton title={product.name} />
+                 </div>
+              </div>
 
               <div className="flex items-center gap-6 pb-8 border-b border-gray-100 mb-8">
                   <div>
