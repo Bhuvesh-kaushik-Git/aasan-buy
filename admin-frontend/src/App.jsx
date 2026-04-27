@@ -37,7 +37,7 @@ function App() {
     { label: 'Dashboard', icon: '📊' },
     { label: 'Orders', icon: '📦' },
     { label: 'Products', icon: '🛒' },
-    { label: 'Categories', icon: '🏷️' },
+    { label: 'Categories/Gift Wrap', icon: '🏷️', key: 'Categories' },
     { label: 'Storefront', icon: '🎨', key: 'CMS' },
     { label: 'Coupons', icon: '🏷️' },
     { label: 'Users', icon: '👥' },

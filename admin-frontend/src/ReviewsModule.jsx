@@ -19,27 +19,55 @@ const statusConfig = {
 const ReviewsModule = ({ adminToken }) => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const observerTarget = React.useRef(null);
   const [statusFilter, setStatusFilter] = useState('pending');
   const [rejectModal, setRejectModal] = useState(null); // review id for rejection note
   const [adminNote, setAdminNote] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => { fetchReviews(); }, [statusFilter]);
+  const fetchReviews = async (p = 1, append = false) => {
+    if (loadingMore) return;
+    if (append) setLoadingMore(true);
+    else setLoading(true);
 
-  const fetchReviews = async () => {
-    setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/reviews?status=${statusFilter}`, {
+      const res = await fetch(`${API_URL}/api/reviews?status=${statusFilter}&page=${p}&limit=20`, {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       const data = await res.json();
-      setReviews(Array.isArray(data) ? data : []);
+      const newReviews = Array.isArray(data) ? data : (data.reviews || []);
+      setReviews(prev => append ? [...prev, ...newReviews] : newReviews);
+      setPages(data.pages || 1);
+      setPage(p);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
+
+  useEffect(() => { 
+    setPage(1);
+    fetchReviews(1, false); 
+  }, [statusFilter]);
+
+  // Infinite Scroll Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && !loading && !loadingMore && page < pages) {
+          fetchReviews(page + 1, true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (observerTarget.current) observer.observe(observerTarget.current);
+    return () => { if (observerTarget.current) observer.unobserve(observerTarget.current); };
+  }, [loading, loadingMore, page, pages, statusFilter]);
 
   const moderate = async (id, status, note = '') => {
     setActionLoading(true);
@@ -181,6 +209,18 @@ const ReviewsModule = ({ adminToken }) => {
               </div>
             </div>
           ))}
+          <div ref={observerTarget} className="h-20 w-full flex items-center justify-center mt-8">
+            {loadingMore && (
+              <div className="flex gap-2">
+                <div className="w-2 h-2 bg-secondary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                <div className="w-2 h-2 bg-secondary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                <div className="w-2 h-2 bg-secondary rounded-full animate-bounce"></div>
+              </div>
+            )}
+            {!loadingMore && page >= pages && reviews.length > 0 && (
+              <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">No more reviews</span>
+            )}
+          </div>
         </div>
       )}
 

@@ -114,7 +114,9 @@ const Header = ({ settings, onOpenCart }) => {
                       <img src={p.images?.[0]} className="w-10 h-10 rounded-xl object-cover shadow-sm group-hover/s:scale-110 transition-transform" alt={p.name} />
                       <div className="flex-1 min-w-0">
                         <p className="text-[13px] font-black text-dark truncate group-hover/s:text-primary transition-colors">{p.name}</p>
-                        <p className="text-[10px] font-bold text-gray-400 italic">In {p.categories?.[0] || 'Uncategorized'}</p>
+                        <p className="text-[10px] font-bold text-gray-400 italic">
+                          In {typeof p.categories?.[0] === 'object' ? p.categories[0].name : (p.categories?.[0] || 'Uncategorized')}
+                        </p>
                       </div>
                       <span className="text-[11px] font-black text-primary opacity-0 group-hover/s:opacity-100 transition-opacity">View →</span>
                     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useWishlist } from '../context/WishlistContext';
 import OptimizedImage from '../components/OptimizedImage';
@@ -9,17 +9,20 @@ const LIMIT = 20;
 const Products = () => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const observerTarget = useRef(null);
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const searchQuery = searchParams.get('search') || '';
   const categoryQuery = searchParams.get('category') || '';
 
-  const fetchProducts = useCallback(async (p = 1) => {
+  const fetchProducts = useCallback(async (p = 1, append = false) => {
+    if (loading) return;
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: p, limit: LIMIT });
@@ -28,7 +31,8 @@ const Products = () => {
 
       const res = await fetch(`${API_URL}/api/products?${params}`);
       const data = await res.json();
-      setProducts(data.products || []);
+      
+      setProducts(prev => append ? [...prev, ...(data.products || [])] : (data.products || []));
       setTotalPages(data.pages || 1);
       setTotal(data.total || 0);
       setPage(p);
@@ -36,10 +40,37 @@ const Products = () => {
       console.error(err);
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
+  }, [searchQuery, categoryQuery, loading]);
+
+  // Initial fetch on search/category change
+  useEffect(() => { 
+    setProducts([]);
+    setPage(1);
+    setInitialLoading(true);
+    fetchProducts(1, false); 
   }, [searchQuery, categoryQuery]);
 
-  useEffect(() => { fetchProducts(1); }, [fetchProducts]);
+  // Intersection Observer for Infinite Scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && !loading && page < totalPages) {
+          fetchProducts(page + 1, true);
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) observer.unobserve(observerTarget.current);
+    };
+  }, [loading, page, totalPages, fetchProducts]);
 
   const title = searchQuery
     ? `Results for "${searchQuery}"`
@@ -54,14 +85,11 @@ const Products = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 border-l-4 border-primary pl-6">
         <div>
           <h1 className="text-4xl font-black font-heading text-dark tracking-tight leading-tight">{title}</h1>
-          {!loading && <p className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] mt-2">{total} hand-picked items</p>}
-        </div>
-        <div className="flex gap-4">
-             {/* Filter/Sort placeholders could go here */}
+          {!initialLoading && <p className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] mt-2">{total} hand-picked items</p>}
         </div>
       </div>
 
-      {loading ? (
+      {initialLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
           {[...Array(10)].map((_, i) => (
             <div key={i} className="flex flex-col gap-4">
@@ -122,38 +150,16 @@ const Products = () => {
             ))}
           </div>
 
-          {/* Pagination 2.0 */}
-          {totalPages > 1 && (
-            <div className="mt-20 flex justify-center items-center gap-4">
-              <button
-                onClick={() => fetchProducts(page - 1)}
-                disabled={page === 1}
-                className="w-12 h-12 rounded-2xl border-2 border-gray-100 flex items-center justify-center text-gray-400 hover:border-primary hover:text-primary transition-all disabled:opacity-20 shadow-soft"
-              >
-                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
-              </button>
-              
+          {/* Infinite Scroll Trigger */}
+          <div ref={observerTarget} className="h-20 w-full flex items-center justify-center mt-12">
+            {loading && (
               <div className="flex gap-2">
-                  {[...Array(totalPages)].map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => fetchProducts(i + 1)}
-                      className={`w-12 h-12 rounded-2xl font-black text-sm transition-all ${page === i + 1 ? 'bg-primary text-white shadow-xl shadow-primary/20 scale-110' : 'bg-white border-2 border-gray-50 text-gray-300 hover:border-primary hover:text-primary'}`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
               </div>
-
-              <button
-                onClick={() => fetchProducts(page + 1)}
-                disabled={page === totalPages}
-                className="w-12 h-12 rounded-2xl border-2 border-gray-100 flex items-center justify-center text-gray-400 hover:border-primary hover:text-primary transition-all disabled:opacity-20 shadow-soft"
-              >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </>
       ) : (
         <div className="min-h-[50vh] flex flex-col items-center justify-center px-6 animate-fade-in text-center">

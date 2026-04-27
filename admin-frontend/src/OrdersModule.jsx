@@ -17,6 +17,8 @@ const OrdersModule = ({ adminToken }) => {
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const observerTarget = React.useRef(null);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState('All');
@@ -35,18 +37,20 @@ const OrdersModule = ({ adminToken }) => {
   const [addingToOrder, setAddingToOrder] = useState(null); // For adding items
   const [addingForm, setAddingForm] = useState({ productId: '', quantity: 1, selectedSize: '', selectedColor: null });
 
-  useEffect(() => { fetchOrders(); }, [page, statusFilter, searchQuery]);
+  const fetchOrders = async (p = 1, append = false) => {
+    if (loadingMore) return;
+    if (append) setLoadingMore(true);
+    else setLoading(true);
 
-  const fetchOrders = async () => {
-    setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/orders?page=${page}&limit=${PAGE_SIZE}&search=${searchQuery}&status=${statusFilter}`, {
+      const res = await fetch(`${API_URL}/api/orders?page=${p}&limit=${PAGE_SIZE}&search=${searchQuery}&status=${statusFilter}`, {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       const data = await res.json();
-      setOrders(data.orders || []);
+      setOrders(prev => append ? [...prev, ...(data.orders || [])] : (data.orders || []));
       setPages(data.pages || 1);
       setTotal(data.totalItems || 0);
+      setPage(p);
 
       if (allProducts.length === 0) {
         const pRes = await fetch(`${API_URL}/api/products?limit=1000`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
@@ -57,8 +61,28 @@ const OrdersModule = ({ adminToken }) => {
       console.error(err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
+
+  useEffect(() => { 
+    setPage(1);
+    fetchOrders(1, false); 
+  }, [statusFilter, searchQuery]);
+
+  // Infinite Scroll Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && !loading && !loadingMore && page < pages) {
+          fetchOrders(page + 1, true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (observerTarget.current) observer.observe(observerTarget.current);
+    return () => { if (observerTarget.current) observer.unobserve(observerTarget.current); };
+  }, [loading, loadingMore, page, pages, statusFilter, searchQuery]);
 
   const handleStatusChange = async (id, newStatus) => {
     try {
@@ -433,16 +457,18 @@ const OrdersModule = ({ adminToken }) => {
         )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:border-secondary hover:text-secondary disabled:opacity-30">← Prev</button>
-          {[...Array(Math.min(totalPages, 7))].map((_, i) => (
-            <button key={i} onClick={() => setPage(i + 1)} className={`w-9 h-9 rounded-xl text-sm font-bold transition-colors ${page === i + 1 ? 'bg-secondary text-white' : 'border border-gray-200 text-gray-600 hover:border-secondary'}`}>{i + 1}</button>
-          ))}
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:border-secondary hover:text-secondary disabled:opacity-30">Next →</button>
-        </div>
-      )}
+      <div ref={observerTarget} className="h-20 w-full flex items-center justify-center mt-8">
+        {loadingMore && (
+          <div className="flex gap-2">
+            <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+            <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+            <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+          </div>
+        )}
+        {!loadingMore && page >= pages && orders.length > 0 && (
+          <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">End of Intelligence Feed</span>
+        )}
+      </div>
 
       {/* Edit Details Modal */}
       {editingOrder && (

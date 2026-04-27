@@ -9,13 +9,28 @@ router.use(protect, adminOnly);
 // @route GET /api/reviews  – get ALL reviews (with filter by status)
 router.get('/', async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
     const { status } = req.query; // ?status=pending | approved | rejected
     const query = status ? { status } : {};
-    const reviews = await Review.find(query)
-      .populate('product', 'name images')
-      .populate('user', 'name email')
-      .sort({ createdAt: -1 });
-    res.json(reviews);
+
+    const [reviews, total] = await Promise.all([
+      Review.find(query)
+        .populate('product', 'name images')
+        .populate('user', 'name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Review.countDocuments(query)
+    ]);
+
+    res.json({
+      reviews,
+      page,
+      pages: Math.ceil(total / limit),
+      totalItems: total
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

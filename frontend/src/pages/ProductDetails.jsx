@@ -202,7 +202,10 @@ const RecommendationRow = ({ row, currentProduct }) => {
 
         let url = `${API_URL}/api/products?limit=8`;
         if (ids.length > 0) url += `&ids=${ids.join(',')}`;
-        else if (row.type === 'category') url += `&category=${currentProduct.categories?.[0] || ''}`;
+        else if (row.type === 'category') {
+           const catId = typeof currentProduct.categories?.[0] === 'object' ? currentProduct.categories[0]._id : (currentProduct.categories?.[0] || '');
+           url += `&category=${catId}`;
+        }
         else if (row.type === 'trending') url += `&sort=trending`;
 
         const res = await fetch(url);
@@ -271,13 +274,22 @@ const ProductDetails = ({ settings, onOpenCart }) => {
       .then(res => res.json())
       .then(data => {
         setProduct(data);
-        if (data.colors?.length > 0) setSelectedColor(data.colors[0]);
-        if (data.sizes?.length > 0) setSelectedSize(data.sizes[0]);
+        
+        // Compute available colors and sizes from variants
+        if (data.variants?.length > 0) {
+          const colors = [...new Set(data.variants.map(v => v.attributes?.color).filter(Boolean))];
+          const sizes = [...new Set(data.variants.map(v => v.attributes?.size).filter(Boolean))];
+          
+          if (colors.length > 0) setSelectedColor(colors[0]);
+          if (sizes.length > 0) setSelectedSize(sizes[0]);
+        }
+        
         setLoading(false);
 
         // Fetch related products from same category
         if (data.categories?.[0]) {
-          fetch(`${API_URL}/api/products?category=${data.categories[0]}&limit=5`)
+          const catId = typeof data.categories[0] === 'object' ? data.categories[0]._id : data.categories[0];
+          fetch(`${API_URL}/api/products?category=${catId}&limit=5`)
             .then(res => res.json())
             .then(d => setRelatedProducts((d.products || []).filter(p => p._id !== id)))
             .catch(() => {});
@@ -317,7 +329,9 @@ const ProductDetails = ({ settings, onOpenCart }) => {
           <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
             <a href="/" className="hover:text-primary transition-colors">Home</a>
             <span>/</span>
-            <a href="/products" className="hover:text-primary transition-colors">{product.categories?.[0] || 'Collections'}</a>
+            <a href="/products" className="hover:text-primary transition-colors">
+              {typeof product.categories?.[0] === 'object' ? product.categories[0].name : (product.categories?.[0] || 'Collections')}
+            </a>
             <span>/</span>
             <span className="text-primary">{product.name}</span>
           </div>
@@ -390,34 +404,42 @@ const ProductDetails = ({ settings, onOpenCart }) => {
 
               {/* Variants */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                 {product.colors?.length > 0 && (
-                   <div>
-                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-4">Selection: <span className="text-dark font-black">{selectedColor?.name}</span></label>
-                     <div className="flex gap-4">
-                        {product.colors.map((c, i) => (
-                          <button key={i} onClick={() => { setSelectedColor(c); setActiveImg(0); }}
-                            className={`w-10 h-10 rounded-2xl p-[3px] border-2 transition-all ${selectedColor?.name === c.name ? 'border-primary ring-4 ring-primary/10' : 'border-transparent hover:border-gray-200'}`}
-                          >
-                            <div className="w-full h-full rounded-xl overflow-hidden border border-gray-100" style={{ backgroundColor: c.hex }}></div>
-                          </button>
-                        ))}
+                 {(() => {
+                   const availableColors = [...new Set(product.variants?.map(v => v.attributes?.color).filter(Boolean))];
+                   if (availableColors.length === 0) return null;
+                   return (
+                     <div>
+                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-4">Selection: <span className="text-dark font-black">{selectedColor}</span></label>
+                       <div className="flex flex-wrap gap-3">
+                          {availableColors.map((c, i) => (
+                            <button key={i} onClick={() => { setSelectedColor(c); setActiveImg(0); }}
+                              className={`px-5 py-2.5 rounded-xl border-2 font-black text-xs transition-all ${selectedColor === c ? 'border-primary bg-primary text-white shadow-xl' : 'border-gray-100 text-gray-400 hover:border-primary/20'}`}
+                            >
+                              {c}
+                            </button>
+                          ))}
+                       </div>
                      </div>
-                   </div>
-                 )}
-                 {product.sizes?.length > 0 && (
-                   <div>
-                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-4">Size Preference</label>
-                     <div className="flex gap-3">
-                        {product.sizes.map((s, i) => (
-                           <button key={i} onClick={() => setSelectedSize(s)}
-                            className={`min-w-[54px] h-11 border-2 font-black text-sm rounded-xl transition-all ${selectedSize === s ? 'border-primary bg-primary text-white shadow-xl' : 'border-gray-100 text-gray-400 hover:border-primary/20'}`}
-                           >
-                             {s}
-                           </button>
-                        ))}
+                   );
+                 })()}
+                 {(() => {
+                   const availableSizes = [...new Set(product.variants?.map(v => v.attributes?.size).filter(Boolean))];
+                   if (availableSizes.length === 0) return null;
+                   return (
+                     <div>
+                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-4">Size Preference</label>
+                       <div className="flex flex-wrap gap-3">
+                          {availableSizes.map((s, i) => (
+                             <button key={i} onClick={() => setSelectedSize(s)}
+                              className={`min-w-[54px] h-11 border-2 font-black text-sm rounded-xl transition-all ${selectedSize === s ? 'border-primary bg-primary text-white shadow-xl' : 'border-gray-100 text-gray-400 hover:border-primary/20'}`}
+                             >
+                               {s}
+                             </button>
+                          ))}
+                       </div>
                      </div>
-                   </div>
-                 )}
+                   );
+                 })()}
               </div>
 
               {/* Gift Wrap Extension */}

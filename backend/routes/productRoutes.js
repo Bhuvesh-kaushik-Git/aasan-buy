@@ -15,26 +15,25 @@ router.get('/', async (req, res) => {
     const ids = req.query.ids ? req.query.ids.split(',') : [];
     const sort = req.query.sort || 'newest';
 
-    const query = {};
+    const query = { status: 'Active' };
     if (ids.length > 0) {
       query._id = { $in: ids };
     }
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
-        { brand: { $regex: search, $options: 'i' } },
-        { categories: { $regex: search, $options: 'i' } },
+        { brand: { $regex: search, $options: 'i' } }
       ];
     }
     if (category) {
-      query.categories = { $regex: category, $options: 'i' };
+      query.categories = category; // Assuming category is passed as ObjectId now
     }
 
     let sortQuery = { createdAt: -1 };
     if (sort === 'trending') sortQuery = { sold: -1 };
 
     const total = await Product.countDocuments(query);
-    const products = await Product.find(query).skip(skip).limit(limit).sort(sortQuery);
+    const products = await Product.find(query).populate('categories', 'name slug').skip(skip).limit(limit).sort(sortQuery);
     res.json({ products, total, page, pages: Math.ceil(total / limit) });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -44,7 +43,7 @@ router.get('/', async (req, res) => {
 // @route  GET /api/products/:id  – Single product
 router.get('/:id', async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate('categories', 'name slug');
     if (product) res.json(product);
     else res.status(404).json({ message: 'Product not found' });
   } catch (err) {

@@ -9,27 +9,50 @@ const UsersModule = ({ adminToken }) => {
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
+  const [loadingMore, setLoadingMore] = useState(false);
+  const observerTarget = React.useRef(null);
   const [selectedUserOrders, setSelectedUserOrders] = useState(null); // { user, orders }
-  const [ordersLoading, setOrdersLoading] = useState(false);
 
-  const fetchUsers = async () => {
-    setLoading(true);
+  const fetchUsers = async (p = 1, append = false) => {
+    if (loadingMore) return;
+    if (append) setLoadingMore(true);
+    else setLoading(true);
+
     try {
-      const res = await fetch(`${API_URL}/api/users?page=${page}&search=${search}&limit=10`, {
+      const res = await fetch(`${API_URL}/api/users?page=${p}&search=${search}&limit=10`, {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       const data = await res.json();
-      setUsers(data.users || []);
+      setUsers(prev => append ? [...prev, ...(data.users || [])] : (data.users || []));
       setPages(data.pages || 1);
       setTotal(data.totalItems || 0);
+      setPage(p);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  useEffect(() => { fetchUsers(); }, [page, search]);
+  useEffect(() => { 
+    setPage(1);
+    fetchUsers(1, false); 
+  }, [search]);
+
+  // Infinite Scroll Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && !loading && !loadingMore && page < pages) {
+          fetchUsers(page + 1, true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (observerTarget.current) observer.observe(observerTarget.current);
+    return () => { if (observerTarget.current) observer.unobserve(observerTarget.current); };
+  }, [loading, loadingMore, page, pages, search]);
 
   const fetchUserOrders = async (u) => {
      setOrdersLoading(true);
@@ -210,19 +233,18 @@ const UsersModule = ({ adminToken }) => {
         </table>
       </div>
 
-      {pages > 1 && (
-        <div className="flex items-center justify-center gap-4 mt-12 bg-white p-6 rounded-[24px] border border-black/5 shadow-soft w-fit mx-auto">
-          <button 
-            disabled={page === 1} onClick={() => setPage(p => p - 1)}
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-dark disabled:opacity-20 hover:bg-primary hover:text-white transition-all shadow-sm"
-          >←</button>
-          <span className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Page {page} of {pages}</span>
-          <button 
-            disabled={page === pages} onClick={() => setPage(p => p + 1)}
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-dark disabled:opacity-20 hover:bg-primary hover:text-white transition-all shadow-sm"
-          >→</button>
-        </div>
-      )}
+      <div ref={observerTarget} className="h-20 w-full flex items-center justify-center mt-8">
+        {loadingMore && (
+          <div className="flex gap-2">
+            <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+            <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+            <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+          </div>
+        )}
+        {!loadingMore && page >= pages && users.length > 0 && (
+          <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">End of Directory</span>
+        )}
+      </div>
 
       {selectedUserOrders && (
          <OrdersModal 
