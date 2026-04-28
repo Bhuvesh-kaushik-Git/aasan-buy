@@ -42,8 +42,6 @@ const ImageMagnifier = ({ src, alt }) => {
            style={{
              width: '150px',
              height: '150px',
-             top: Math.max(0, Math.min(lensPos.y - 75, e => e.currentTarget.height - 150)),
-             // The above is pseudo code. Using a simpler CSS trick:
              top: `calc(${position.y}% - 75px)`,
              left: `calc(${position.x}% - 75px)`,
              boxShadow: '0 0 0 9999px rgba(255,255,255,0.4)',
