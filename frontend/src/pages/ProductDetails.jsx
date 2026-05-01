@@ -77,7 +77,7 @@ const ReviewsSection = ({ productId }) => {
   const { showToast } = useToast();
 
   useEffect(() => {
-    fetch(`${API_URL}/api/products/${productId}/reviews`)
+    fetch(`${API_URL}/products/${productId}/reviews`)
       .then(r => r.json())
       .then(data => setReviews(Array.isArray(data) ? data : []))
       .catch(() => {});
@@ -87,7 +87,7 @@ const ReviewsSection = ({ productId }) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_URL}/api/products/${productId}/reviews`, {
+      const res = await fetch(`${API_URL}/products/${productId}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -200,7 +200,7 @@ const RecommendationRow = ({ row, currentProduct }) => {
            return;
         }
 
-        let url = `${API_URL}/api/products?limit=8`;
+        let url = `${API_URL}/products?limit=8`;
         if (ids.length > 0) url += `&ids=${ids.join(',')}`;
         else if (row.type === 'category') {
            const catId = typeof currentProduct.categories?.[0] === 'object' ? currentProduct.categories[0]._id : (currentProduct.categories?.[0] || '');
@@ -270,7 +270,7 @@ const ProductDetails = ({ settings, onOpenCart }) => {
   const { showToast } = useToast();
 
   useEffect(() => {
-    fetch(`${API_URL}/api/products/${id}`)
+    fetch(`${API_URL}/products/${id}`)
       .then(res => res.json())
       .then(data => {
         setProduct(data);
@@ -289,7 +289,7 @@ const ProductDetails = ({ settings, onOpenCart }) => {
         // Fetch related products from same category
         if (data.categories?.[0]) {
           const catId = typeof data.categories[0] === 'object' ? data.categories[0]._id : data.categories[0];
-          fetch(`${API_URL}/api/products?category=${catId}&limit=5`)
+          fetch(`${API_URL}/products?category=${catId}&limit=5`)
             .then(res => res.json())
             .then(d => setRelatedProducts((d.products || []).filter(p => p._id !== id)))
             .catch(() => {});
@@ -298,7 +298,7 @@ const ProductDetails = ({ settings, onOpenCart }) => {
       .catch(() => setLoading(false));
 
     // Fetch active gift wraps
-    fetch(`${API_URL}/api/giftwraps`)
+    fetch(`${API_URL}/giftwraps`)
       .then(r => r.json())
       .then(data => {
         setGiftWraps(Array.isArray(data) ? data : []);

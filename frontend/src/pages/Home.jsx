@@ -123,7 +123,7 @@ const Home = ({ settings }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/products?limit=20&page=1`);
+        const res = await fetch(`${API_URL}/products?limit=20&page=1`);
         const data = await res.json();
         setProducts(data.products || []);
       } catch (err) {

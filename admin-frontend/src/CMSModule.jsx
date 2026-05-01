@@ -24,7 +24,7 @@ const CurationModal = ({ isOpen, onClose, onSave, allProducts, seedProduct, init
     if (!seedProduct) return;
     setLoadingAI(true);
     try {
-      const res = await fetch(`${API_URL}/api/ai/suggest`, {
+      const res = await fetch(`${API_URL}/ai/suggest`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -269,7 +269,7 @@ const CMSModule = ({ adminToken }) => {
 
   useEffect(() => {
     if (!adminToken) return;
-    fetch(`${API_URL}/api/products?limit=200&page=1`, {
+    fetch(`${API_URL}/products?limit=200&page=1`, {
        headers: { 'Authorization': `Bearer ${adminToken}` }
     })
       .then(res => res.json())
@@ -278,7 +278,7 @@ const CMSModule = ({ adminToken }) => {
   }, [adminToken]);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/settings`)
+    fetch(`${API_URL}/settings`)
       .then(res => res.json())
       .then(data => {
         if (data) {
@@ -297,7 +297,7 @@ const CMSModule = ({ adminToken }) => {
 
   const handleSaveCMS = () => {
     setLoading(true);
-    fetch(`${API_URL}/api/settings`, {
+    fetch(`${API_URL}/settings`, {
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',
@@ -490,7 +490,7 @@ const CMSModule = ({ adminToken }) => {
                               const file = e.target.files[0]; if(!file) return;
                               const fd = new FormData(); fd.append('image', file);
                               try{
-                                 const r = await fetch(`${API_URL}/api/upload`, { method:'POST', headers:{'Authorization':`Bearer ${adminToken}`}, body:fd});
+                                 const r = await fetch(`${API_URL}/upload`, { method:'POST', headers:{'Authorization':`Bearer ${adminToken}`}, body:fd});
                                  const d = await r.json(); if(r.ok) handleBannerChange(index, 'imageUrl', d.url);
                               } catch(err) { console.error(err); }
                            }} 
@@ -600,7 +600,7 @@ const CMSModule = ({ adminToken }) => {
                                          const file = e.target.files[0]; if(!file) return;
                                          const fd = new FormData(); fd.append('image', file);
                                          try{
-                                            const r = await fetch(`${API_URL}/api/upload`, { method:'POST', headers:{'Authorization':`Bearer ${adminToken}`}, body:fd});
+                                            const r = await fetch(`${API_URL}/upload`, { method:'POST', headers:{'Authorization':`Bearer ${adminToken}`}, body:fd});
                                             const d = await r.json(); if(r.ok) handleOccasionChange(sIdx, oIdx, 'imageUrl', d.url);
                                          } catch(err) { console.error(err); }
                                       }} 

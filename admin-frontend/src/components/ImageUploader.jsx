@@ -15,7 +15,7 @@ export default function ImageUploader({ value, onChange, adminToken, placeholder
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
     try {
-      const res = await fetch(`${API_URL}/api/upload`, {
+      const res = await fetch(`${API_URL}/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${adminToken}`

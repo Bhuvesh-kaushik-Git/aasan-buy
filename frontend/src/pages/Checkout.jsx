@@ -103,7 +103,7 @@ const Checkout = () => {
     setCouponMsg(null);
     setIsCouponAnimated(false);
     try {
-      const res = await fetch(`${API_URL}/api/coupons/validate`, {
+      const res = await fetch(`${API_URL}/coupons/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -137,7 +137,7 @@ const Checkout = () => {
      setReferralLoading(true);
      setReferrerName(null);
      try {
-        const res = await fetch(`${API_URL}/api/auth/verify-referral/${referralCode.trim()}`);
+        const res = await fetch(`${API_URL}/auth/verify-referral/${referralCode.trim()}`);
         const data = await res.json();
         if (res.ok && data.valid) {
            setReferrerName(data.name);
@@ -166,7 +166,7 @@ const Checkout = () => {
         useAasanCoins: useAasanCoins,
         currency: CURRENCY,
       };
-      const res = await fetch(`${API_URL}/api/orders`, {
+      const res = await fetch(`${API_URL}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -188,7 +188,7 @@ const Checkout = () => {
           description: 'Secure Checkout',
           order_id: data.razorpayOrderId,
           handler: async (response) => {
-            const verifyRes = await fetch(`${API_URL}/api/orders/verify-payment`, {
+            const verifyRes = await fetch(`${API_URL}/orders/verify-payment`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               credentials: 'include',

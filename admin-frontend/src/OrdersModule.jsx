@@ -43,7 +43,7 @@ const OrdersModule = ({ adminToken }) => {
     else setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/api/orders?page=${p}&limit=${PAGE_SIZE}&search=${searchQuery}&status=${statusFilter}`, {
+      const res = await fetch(`${API_URL}/orders?page=${p}&limit=${PAGE_SIZE}&search=${searchQuery}&status=${statusFilter}`, {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       const data = await res.json();
@@ -53,7 +53,7 @@ const OrdersModule = ({ adminToken }) => {
       setPage(p);
 
       if (allProducts.length === 0) {
-        const pRes = await fetch(`${API_URL}/api/products?limit=1000`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+        const pRes = await fetch(`${API_URL}/products?limit=1000`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
         const pData = await pRes.json();
         setAllProducts(pData.products || []);
       }
@@ -86,7 +86,7 @@ const OrdersModule = ({ adminToken }) => {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      await fetch(`${API_URL}/api/orders/${id}/status`, {
+      await fetch(`${API_URL}/orders/${id}/status`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -100,7 +100,7 @@ const OrdersModule = ({ adminToken }) => {
 
   const handlePaymentStatusChange = async (id, newStatus) => {
     try {
-      await fetch(`${API_URL}/api/orders/${id}/payment`, {
+      await fetch(`${API_URL}/orders/${id}/payment`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -117,7 +117,7 @@ const OrdersModule = ({ adminToken }) => {
     setBulkLoading(true);
     try {
       await Promise.all(
-        selectedIds.map(id => fetch(`${API_URL}/api/orders/${id}/status`, {
+        selectedIds.map(id => fetch(`${API_URL}/orders/${id}/status`, {
           method: 'PUT',
           headers: { 
             'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ const OrdersModule = ({ adminToken }) => {
   const handleRollback = async (id) => {
     if (!window.confirm("CRITICAL: This will return all items to stock and cancel the order permanently. Proceed?")) return;
     try {
-      const res = await fetch(`${API_URL}/api/orders/${id}/rollback`, {
+      const res = await fetch(`${API_URL}/orders/${id}/rollback`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
@@ -149,7 +149,7 @@ const OrdersModule = ({ adminToken }) => {
   const handleUpdateDetails = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_URL}/api/orders/${editingOrder._id}/details`, {
+      const res = await fetch(`${API_URL}/orders/${editingOrder._id}/details`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
         body: JSON.stringify({ customerDetails: editingOrder.customerDetails })
@@ -164,7 +164,7 @@ const OrdersModule = ({ adminToken }) => {
   const handleAddItem = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_URL}/api/orders/${addingToOrder._id}/items`, {
+      const res = await fetch(`${API_URL}/orders/${addingToOrder._id}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
         body: JSON.stringify(addingForm)

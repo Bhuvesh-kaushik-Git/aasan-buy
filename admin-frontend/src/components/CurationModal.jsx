@@ -23,7 +23,7 @@ const CurationModal = ({ isOpen, onClose, onSave, allProducts, seedProduct, init
     if (!seedProduct) return;
     setLoadingAI(true);
     try {
-      const res = await fetch(`${API_URL}/api/ai/suggest`, {
+      const res = await fetch(`${API_URL}/ai/suggest`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

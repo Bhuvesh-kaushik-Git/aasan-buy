@@ -32,7 +32,7 @@ const Profile = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/orders/my-orders`, {
+      const res = await fetch(`${API_URL}/orders/my-orders`, {
         credentials: 'include'
       });
       const data = await res.json();
@@ -46,7 +46,7 @@ const Profile = () => {
 
   const fetchReferrals = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/auth/referrals`, {
+      const res = await fetch(`${API_URL}/auth/referrals`, {
         credentials: 'include'
       });
       const data = await res.json();
@@ -59,7 +59,7 @@ const Profile = () => {
   const handleAddAddress = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_URL}/api/auth/addresses`, {
+      const res = await fetch(`${API_URL}/auth/addresses`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newAddress),
@@ -77,7 +77,7 @@ const Profile = () => {
   const handleDeleteAddress = async (id) => {
     if (!window.confirm("Delete this address?")) return;
     try {
-      const res = await fetch(`${API_URL}/api/auth/addresses/${id}`, {
+      const res = await fetch(`${API_URL}/auth/addresses/${id}`, {
         method: 'DELETE',
         credentials: 'include'
       });

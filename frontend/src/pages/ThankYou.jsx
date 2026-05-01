@@ -23,19 +23,19 @@ const ThankYou = () => {
 
         const fetchOrder = async () => {
             try {
-                const res = await fetch(`${API_URL}/api/orders/${orderId}`);
+                const res = await fetch(`${API_URL}/orders/${orderId}`);
                 if (!res.ok) throw new Error('Order not found');
                 const data = await res.json();
                 setOrder(data);
 
                 // Fetch recommendations based on first item's category
                 if (data.items?.[0]?.category) {
-                     const recRes = await fetch(`${API_URL}/api/products?category=${data.items[0].category}&limit=4`);
+                     const recRes = await fetch(`${API_URL}/products?category=${data.items[0].category}&limit=4`);
                      const recData = await recRes.json();
                      setRecommendedProducts((recData.products || []).filter(p => !data.items.find(item => item.productId === p._id)));
                 } else {
                      // Fallback to trending
-                     const recRes = await fetch(`${API_URL}/api/products?limit=4&sort=trending`);
+                     const recRes = await fetch(`${API_URL}/products?limit=4&sort=trending`);
                      const recData = await recRes.json();
                      setRecommendedProducts(recData.products || []);
                 }

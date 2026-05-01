@@ -25,7 +25,7 @@ function App() {
   const handleLogout = async () => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-      await fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+      await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
     } catch (err) {}
     setAdminUser(null);
     localStorage.removeItem('aasanAdmin');

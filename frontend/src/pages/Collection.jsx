@@ -12,7 +12,7 @@ const Collection = () => {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const res = await fetch(`${API_URL}/api/settings`);
+                const res = await fetch(`${API_URL}/settings`);
                 if (!res.ok) throw new Error('Settings not found');
                 const settings = await res.json();
                 

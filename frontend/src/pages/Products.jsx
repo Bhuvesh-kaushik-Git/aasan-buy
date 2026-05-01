@@ -29,7 +29,7 @@ const Products = () => {
       if (searchQuery) params.set('search', searchQuery);
       if (categoryQuery) params.set('category', categoryQuery);
 
-      const res = await fetch(`${API_URL}/api/products?${params}`);
+      const res = await fetch(`${API_URL}/products?${params}`);
       const data = await res.json();
       
       setProducts(prev => append ? [...prev, ...(data.products || [])] : (data.products || []));

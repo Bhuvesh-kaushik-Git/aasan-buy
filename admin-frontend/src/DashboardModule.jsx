@@ -25,8 +25,8 @@ const DashboardModule = ({ adminToken }) => {
     const fetchData = async () => {
       try {
         const [ordersRes, productsRes] = await Promise.all([
-          fetch(`${API_URL}/api/orders`, { headers: { 'Authorization': `Bearer ${adminToken}` } }),
-          fetch(`${API_URL}/api/products?limit=100&page=1`, { headers: { 'Authorization': `Bearer ${adminToken}` } }),
+          fetch(`${API_URL}/orders`, { headers: { 'Authorization': `Bearer ${adminToken}` } }),
+          fetch(`${API_URL}/products?limit=100&page=1`, { headers: { 'Authorization': `Bearer ${adminToken}` } }),
         ]);
         const ordersData = await ordersRes.json();
         const productsData = await productsRes.json();

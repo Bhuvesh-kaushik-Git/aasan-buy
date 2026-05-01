@@ -19,7 +19,7 @@ const UsersModule = ({ adminToken }) => {
     else setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/api/users?page=${p}&search=${search}&limit=10`, {
+      const res = await fetch(`${API_URL}/users?page=${p}&search=${search}&limit=10`, {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       const data = await res.json();
@@ -57,7 +57,7 @@ const UsersModule = ({ adminToken }) => {
   const fetchUserOrders = async (u) => {
      setOrdersLoading(true);
      try {
-        const res = await fetch(`${API_URL}/api/users/${u._id}/orders`, {
+        const res = await fetch(`${API_URL}/users/${u._id}/orders`, {
            headers: { 'Authorization': `Bearer ${adminToken}` }
         });
         const data = await res.json();
@@ -71,7 +71,7 @@ const UsersModule = ({ adminToken }) => {
 
   const toggleStatus = async (id) => {
     try {
-      const res = await fetch(`${API_URL}/api/users/${id}/toggle-status`, {
+      const res = await fetch(`${API_URL}/users/${id}/toggle-status`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
@@ -85,7 +85,7 @@ const UsersModule = ({ adminToken }) => {
 
   const updatePaymentStatus = async (orderId, newStatus) => {
     try {
-       const res = await fetch(`${API_URL}/api/orders/${orderId}/payment`, {
+       const res = await fetch(`${API_URL}/orders/${orderId}/payment`, {
           method: 'PUT',
           headers: { 
              'Authorization': `Bearer ${adminToken}`,
@@ -114,7 +114,7 @@ const UsersModule = ({ adminToken }) => {
     if (isNaN(coins) || coins < 0) return alert("Invalid amount. Coins must be a non-negative number.");
 
     try {
-      const res = await fetch(`${API_URL}/api/users/${id}/update-coins`, {
+      const res = await fetch(`${API_URL}/users/${id}/update-coins`, {
         method: 'PUT',
         headers: { 
            'Authorization': `Bearer ${adminToken}`,
@@ -136,7 +136,7 @@ const UsersModule = ({ adminToken }) => {
   const deleteUser = async (id) => {
     if (!window.confirm("Danger: Deleting a user will also orphan their order history. Proceed?")) return;
     try {
-      const res = await fetch(`${API_URL}/api/users/${id}`, {
+      const res = await fetch(`${API_URL}/users/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });

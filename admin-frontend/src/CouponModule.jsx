@@ -23,7 +23,7 @@ const CouponModule = ({ adminToken }) => {
   const fetchCoupons = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/coupons`, {
+      const res = await fetch(`${API_URL}/coupons`, {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       const data = await res.json();
@@ -40,7 +40,7 @@ const CouponModule = ({ adminToken }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const method = editingCoupon ? 'PUT' : 'POST';
-    const url = editingCoupon ? `${API_URL}/api/coupons/${editingCoupon._id}` : `${API_URL}/api/coupons`;
+    const url = editingCoupon ? `${API_URL}/coupons/${editingCoupon._id}` : `${API_URL}/coupons`;
     
     const assignedArray = form.assignedTo ? form.assignedTo.split(',').map(s => s.trim()).filter(Boolean) : [];
 
@@ -76,7 +76,7 @@ const CouponModule = ({ adminToken }) => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure?")) return;
     try {
-      const res = await fetch(`${API_URL}/api/coupons/${id}`, {
+      const res = await fetch(`${API_URL}/coupons/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });

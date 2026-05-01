@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
       const stored = localStorage.getItem('aasanUser');
       if (stored) {
         try {
-          const res = await fetch(`${API_URL}/api/auth/profile`, {
+          const res = await fetch(`${API_URL}/auth/profile`, {
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include'
           });
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const res = await fetch(`${API_URL}/api/auth/login`, {
+    const res = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (name, email, password, phone) => {
-    const res = await fetch(`${API_URL}/api/auth/register`, {
+    const res = await fetch(`${API_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password, phone }),
@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+      await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
     } catch (e) {}
     setUser(null);
     localStorage.removeItem('aasanUser');

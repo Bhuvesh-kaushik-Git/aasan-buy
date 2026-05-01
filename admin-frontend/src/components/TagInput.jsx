@@ -29,7 +29,7 @@ const TagInput = ({ tags, setTags, placeholder = "Add tag...", adminToken, allow
      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
      try {
-       const res = await fetch(`${API_URL}/api/upload`, {
+       const res = await fetch(`${API_URL}/upload`, {
          method: 'POST',
          headers: {
            ...(adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {})

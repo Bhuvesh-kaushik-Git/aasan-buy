@@ -29,7 +29,7 @@ export default function ProductsModule({ adminToken }) {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
   useEffect(() => {
-    fetch(`${API_URL}/api/categories`, { headers: { 'Authorization': `Bearer ${adminToken}` } })
+    fetch(`${API_URL}/categories`, { headers: { 'Authorization': `Bearer ${adminToken}` } })
        .then(r => r.json())
        .then(d => setDbCategories(d))
        .catch(e => console.error(e));
@@ -41,7 +41,7 @@ export default function ProductsModule({ adminToken }) {
     else setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/api/products?page=${p}&limit=${limit}&search=${encodeURIComponent(search)}`, {
+      const res = await fetch(`${API_URL}/products?page=${p}&limit=${limit}&search=${encodeURIComponent(search)}`, {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       const data = await res.json();
@@ -96,7 +96,7 @@ export default function ProductsModule({ adminToken }) {
   const handleDeleteSelected = async () => {
     if (!window.confirm(`Delete ${selectedIds.length} products?`)) return;
     try {
-      await fetch(`${API_URL}/api/products/bulk`, {
+      await fetch(`${API_URL}/products/bulk`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
         body: JSON.stringify({ ids: selectedIds })
@@ -280,7 +280,7 @@ export default function ProductsModule({ adminToken }) {
            return alert("No valid products found in the sheet.");
         }
 
-        const res = await fetch(`${API_URL}/api/products/bulk`, {
+        const res = await fetch(`${API_URL}/products/bulk`, {
            method: 'POST',
            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
            body: JSON.stringify({ products: formattedProducts })
@@ -362,7 +362,7 @@ export default function ProductsModule({ adminToken }) {
 
     setLoading(true);
     const isNew = !editingProduct._id;
-    const url = isNew ? `${API_URL}/api/products` : `${API_URL}/api/products/${editingProduct._id}`;
+    const url = isNew ? `${API_URL}/products` : `${API_URL}/products/${editingProduct._id}`;
     const method = isNew ? 'POST' : 'PUT';
 
     try {

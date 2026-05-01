@@ -34,7 +34,7 @@ const ReviewsModule = ({ adminToken }) => {
     else setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/api/reviews?status=${statusFilter}&page=${p}&limit=20`, {
+      const res = await fetch(`${API_URL}/reviews?status=${statusFilter}&page=${p}&limit=20`, {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       const data = await res.json();
@@ -72,7 +72,7 @@ const ReviewsModule = ({ adminToken }) => {
   const moderate = async (id, status, note = '') => {
     setActionLoading(true);
     try {
-      await fetch(`${API_URL}/api/reviews/${id}/moderate`, {
+      await fetch(`${API_URL}/reviews/${id}/moderate`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -93,7 +93,7 @@ const ReviewsModule = ({ adminToken }) => {
   const deleteReview = async (id) => {
     if (!confirm('Delete this review permanently?')) return;
     try {
-      await fetch(`${API_URL}/api/reviews/${id}`, { 
+      await fetch(`${API_URL}/reviews/${id}`, { 
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });

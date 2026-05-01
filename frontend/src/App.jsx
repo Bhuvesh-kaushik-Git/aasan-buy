@@ -170,7 +170,7 @@ function AppContent() {
   const [settings, setSettings] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/settings`)
+    fetch(`${API_URL}/settings`)
       .then(res => res.json())
       .then(data => setSettings(data))
       .catch(err => console.error('Error fetching settings:', err));

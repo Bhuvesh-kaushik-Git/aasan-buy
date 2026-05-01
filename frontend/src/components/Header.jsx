@@ -29,7 +29,7 @@ const Header = ({ settings, onOpenCart }) => {
       if (searchQuery.length >= 2) {
         setIsSearching(true);
         const API_URL = import.meta.env.VITE_API_URL;
-        fetch(`${API_URL}/api/products?search=${encodeURIComponent(searchQuery)}&limit=5`)
+        fetch(`${API_URL}/products?search=${encodeURIComponent(searchQuery)}&limit=5`)
           .then(res => res.json())
           .then(data => {
             setSuggestions(data.products || []);

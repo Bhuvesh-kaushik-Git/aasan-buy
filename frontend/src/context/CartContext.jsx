@@ -37,7 +37,7 @@ export const CartProvider = ({ children }) => {
     if (user && isInitialized) {
       const fetchRemoteCart = async () => {
         try {
-          const res = await fetch(`${API_URL}/api/auth/cart`, { credentials: 'include' });
+          const res = await fetch(`${API_URL}/auth/cart`, { credentials: 'include' });
           if (res.ok) {
             const remoteCart = await res.json();
             if (remoteCart.length > 0) {
@@ -64,7 +64,7 @@ export const CartProvider = ({ children }) => {
       if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
       syncTimeoutRef.current = setTimeout(async () => {
         try {
-          await fetch(`${API_URL}/api/auth/cart`, {
+          await fetch(`${API_URL}/auth/cart`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cart }),
@@ -83,7 +83,7 @@ export const CartProvider = ({ children }) => {
     setIsValidatingStock(true);
     try {
       const itemIds = [...new Set(cart.map(i => i.productId))];
-      const res = await fetch(`${API_URL}/api/products/bulk-stock`, {
+      const res = await fetch(`${API_URL}/products/bulk-stock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ itemIds }),

@@ -21,7 +21,7 @@ export const WishlistProvider = ({ children }) => {
       if (user) {
         setLoading(true);
         try {
-          const res = await fetch(`${API_URL}/api/wishlist`, { credentials: 'include' });
+          const res = await fetch(`${API_URL}/wishlist`, { credentials: 'include' });
           if (res.ok) {
             const data = await res.json();
             setWishlist(data || []);
@@ -30,7 +30,7 @@ export const WishlistProvider = ({ children }) => {
             if (local.length > 0) {
               for (const item of local) {
                 if (!data.find(d => d._id === item._id)) {
-                  await fetch(`${API_URL}/api/wishlist/toggle`, {
+                  await fetch(`${API_URL}/wishlist/toggle`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -39,7 +39,7 @@ export const WishlistProvider = ({ children }) => {
                 }
               }
               localStorage.removeItem('aasanWishlist');
-              const refreshed = await fetch(`${API_URL}/api/wishlist`, { credentials: 'include' });
+              const refreshed = await fetch(`${API_URL}/wishlist`, { credentials: 'include' });
               const refreshedData = await refreshed.json();
               setWishlist(refreshedData);
             }
@@ -62,7 +62,7 @@ export const WishlistProvider = ({ children }) => {
 
     if (user) {
       try {
-        const res = await fetch(`${API_URL}/api/wishlist/toggle`, {
+        const res = await fetch(`${API_URL}/wishlist/toggle`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',

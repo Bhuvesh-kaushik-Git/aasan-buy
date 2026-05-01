@@ -16,7 +16,7 @@ const CategoryProductAssigner = ({ categoryId, onSaveCategoryProducts, adminToke
     const timer = setTimeout(() => {
       if (search.trim()) {
         setSearching(true);
-        fetch(`${API_URL}/api/products?search=${encodeURIComponent(search)}&limit=15`, {
+        fetch(`${API_URL}/products?search=${encodeURIComponent(search)}&limit=15`, {
           headers: { 'Authorization': `Bearer ${adminToken}` }
         })
           .then(r => r.json())
@@ -45,7 +45,7 @@ const CategoryProductAssigner = ({ categoryId, onSaveCategoryProducts, adminToke
     if(selectedProducts.length === 0) return alert("Select products first");
     setLoading(true);
     try {
-      await fetch(`${API_URL}/api/categories/${categoryId}/products`, {
+      await fetch(`${API_URL}/categories/${categoryId}/products`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -158,7 +158,7 @@ export default function CategoriesModule({ adminToken }) {
 
         if (data.length === 0) return alert("Sheet is empty");
 
-        const res = await fetch(`${API_URL}/api/categories/bulk`, {
+        const res = await fetch(`${API_URL}/categories/bulk`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
@@ -186,7 +186,7 @@ export default function CategoriesModule({ adminToken }) {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/categories`, {
+      const res = await fetch(`${API_URL}/categories`, {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       const data = await res.json();
@@ -201,7 +201,7 @@ export default function CategoriesModule({ adminToken }) {
   const fetchGiftWraps = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/giftwraps`, {
+      const res = await fetch(`${API_URL}/giftwraps`, {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       const data = await res.json();
@@ -222,7 +222,7 @@ export default function CategoriesModule({ adminToken }) {
     e.preventDefault();
     setLoading(true);
     const isNew = !editingCategory._id;
-    const url = isNew ? `${API_URL}/api/categories` : `${API_URL}/api/categories/${editingCategory._id}`;
+    const url = isNew ? `${API_URL}/categories` : `${API_URL}/categories/${editingCategory._id}`;
     const method = isNew ? 'POST' : 'PUT';
 
     const payload = { 
@@ -272,7 +272,7 @@ export default function CategoriesModule({ adminToken }) {
      e.preventDefault();
      setLoading(true);
      const isNew = !editingGiftWrap._id;
-     const url = isNew ? `${API_URL}/api/giftwraps` : `${API_URL}/api/giftwraps/${editingGiftWrap._id}`;
+     const url = isNew ? `${API_URL}/giftwraps` : `${API_URL}/giftwraps/${editingGiftWrap._id}`;
      const method = isNew ? 'POST' : 'PUT';
      try {
        const res = await fetch(url, {
@@ -292,7 +292,7 @@ export default function CategoriesModule({ adminToken }) {
   const handleDeleteCategory = async (id) => {
      if(!window.confirm("Are you sure you want to delete this category?")) return;
      try {
-         await fetch(`${API_URL}/api/categories/${id}`, { 
+         await fetch(`${API_URL}/categories/${id}`, { 
            method: 'DELETE',
            headers: { 'Authorization': `Bearer ${adminToken}` }
          });
@@ -303,7 +303,7 @@ export default function CategoriesModule({ adminToken }) {
   const handleDeleteGiftWrap = async (id) => {
     if(!window.confirm("Delete this gift wrap?")) return;
     try {
-        await fetch(`${API_URL}/api/giftwraps/${id}`, { 
+        await fetch(`${API_URL}/giftwraps/${id}`, { 
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${adminToken}` }
         });
@@ -326,7 +326,7 @@ export default function CategoriesModule({ adminToken }) {
     for (let i = 0; i < items.length; i++) {
        if (items[i].displayOrder !== i) {
           items[i].displayOrder = i;
-          await fetch(`${API_URL}/api/categories/${items[i]._id}`, {
+          await fetch(`${API_URL}/categories/${items[i]._id}`, {
              method: 'PUT',
              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
              body: JSON.stringify({ displayOrder: i })
